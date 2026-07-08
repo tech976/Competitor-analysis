@@ -92,7 +92,9 @@ export default function PageResolver({
       const r = await fetch(endpoint, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ pageId, pageName: pageName ?? query }),
+        // API expects fbPageId/fbPageName — sending pageId/pageName silently
+        // no-ops (the fields are optional), so the page never actually saved.
+        body: JSON.stringify({ fbPageId: pageId, fbPageName: pageName ?? query }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Save failed.");
