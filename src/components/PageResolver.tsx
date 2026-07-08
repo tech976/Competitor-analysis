@@ -19,11 +19,32 @@ export interface ResolverTarget {
   currentName: string;
 }
 
+/** Pull the exact PAGE id from a pasted Ad Library URL or a bare numeric id.
+ *  (Note: `?id=` on the Ad Library is an AD's id, not a page id, so we ignore it.) */
 function parsePageId(s: string): string | null {
   const t = s.trim();
   if (/^\d{5,}$/.test(t)) return t;
-  const m = t.match(/view_all_page_id=(\d+)/) || t.match(/[?&]id=(\d+)/);
+  const m =
+    t.match(/view_all_page_id=(\d+)/i) ||
+    t.match(/[?&]page_id=(\d+)/i) ||
+    t.match(/\/(\d{6,})\/?(?:[?#]|$)/); // page id in the path
   return m ? m[1] : null;
+}
+
+/** When there's no page id, get a searchable brand term from the pasted text:
+ *  a `q=` search URL, a facebook.com/<handle>, or just a typed name. */
+function extractSearchTerm(s: string): string | null {
+  const t = s.trim();
+  if (!t) return null;
+  const q = t.match(/[?&]q=([^&]+)/i);
+  if (q) {
+    const term = decodeURIComponent(q[1].replace(/\+/g, " ")).trim();
+    if (term) return term;
+  }
+  const handle = t.match(/facebook\.com\/(?!ads\/|profile\.php)([A-Za-z0-9._-]{2,})/i);
+  if (handle) return handle[1].replace(/[._-]+/g, " ").trim();
+  if (!/^https?:\/\//i.test(t)) return t; // not a URL → treat as a brand name
+  return null;
 }
 
 export default function PageResolver({
@@ -46,12 +67,14 @@ export default function PageResolver({
       ? `/api/clients/${target.id}`
       : `/api/competitors/${target.id}`;
 
-  async function find() {
+  async function find(searchTerm?: string) {
+    const term = (searchTerm ?? query).trim();
+    if (!term) return;
     setBusy(true);
     setError(null);
     setPages(null);
     try {
-      const r = await fetch(`/api/resolve-pages?q=${encodeURIComponent(query)}`);
+      const r = await fetch(`/api/resolve-pages?q=${encodeURIComponent(term)}`);
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Search failed.");
       setPages(d.pages ?? []);
@@ -82,12 +105,24 @@ export default function PageResolver({
   }
 
   function saveManual() {
+    setError(null);
     const pid = parsePageId(manual);
-    if (!pid) {
-      setError("Couldn't find a page id in that. Paste an Ad Library page URL or a numeric page id.");
+    if (pid) {
+      save(pid, query);
       return;
     }
-    save(pid, query);
+    // No exact page id in the paste — treat it as a search (e.g. an Ad Library
+    // search URL with ?q=, a page handle, or a typed name) and show candidates.
+    const term = extractSearchTerm(manual);
+    if (term) {
+      setQuery(term);
+      setManual("");
+      find(term);
+      return;
+    }
+    setError(
+      "Couldn't read a page from that. In the Ad Library, open the advertiser (the URL shows “view_all_page_id=…”) and paste it — or just type the brand name above and click Find."
+    );
   }
 
   return (
@@ -112,7 +147,7 @@ export default function PageResolver({
             placeholder="Brand name"
             onKeyDown={(e) => e.key === "Enter" && find()}
           />
-          <button className="btn-primary shrink-0" onClick={find} disabled={busy || !query.trim()}>
+          <button className="btn-primary shrink-0" onClick={() => find()} disabled={busy || !query.trim()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             Find
           </button>
@@ -161,18 +196,23 @@ export default function PageResolver({
         )}
 
         <div className="mt-4 border-t border-border pt-3">
-          <p className="label mb-1.5">Or paste the Ad Library page URL / page id</p>
+          <p className="label mb-1.5">Or paste an Ad Library URL / page id</p>
           <div className="flex gap-2">
             <input
               className="input"
               value={manual}
               onChange={(e) => setManual(e.target.value)}
-              placeholder="…?view_all_page_id=123456789  or  123456789"
+              onKeyDown={(e) => e.key === "Enter" && manual.trim() && saveManual()}
+              placeholder="Paste any Ad Library URL, page id, or brand name"
             />
             <button className="btn-ghost shrink-0" onClick={saveManual} disabled={saving !== null || !manual.trim()}>
-              <Link2 className="h-4 w-4" /> Save
+              <Link2 className="h-4 w-4" /> Go
             </button>
           </div>
+          <p className="mt-1.5 text-[11px] text-muted/80">
+            Tip: a plain search URL has no page id — click into the advertiser in the Ad Library so the
+            URL shows <span className="text-muted">view_all_page_id=…</span>, or just paste the brand name and we&apos;ll find it.
+          </p>
         </div>
       </div>
     </div>
