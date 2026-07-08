@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdGapIQ — Product Overview</title>
+<style>
+  :root{
+    --paper:#fff; --ground:#f7f6fb; --ink:#191924; --ink-soft:#3a3a48;
+    --muted:#63637a; --faint:#93939f; --line:#e5e3ef; --line-soft:#efedf7;
+    --violet:#6d4bff; --violet-ink:#5733e6; --wash:#f2eeff;
+    --good:#16a34a; --good-wash:#e9f7ee; --warn-wash:#fbf1e2;
+    --sans:-apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;letter-spacing:-0.004em;}
+  .doc{max-width:860px;margin:0 auto;padding:0 clamp(20px,4vw,36px) 44px;}
+
+  .cover{padding:38px 0 22px;}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:20px;}
+  .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#8b6cff,#6d4bff);display:grid;place-items:center;box-shadow:0 6px 16px -6px rgba(109,75,255,.6);}
+  .logo::after{content:"";width:13px;height:13px;border:2.4px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(255,255,255,.22) inset;}
+  .brand b{font-size:18px;font-weight:750;} .brand b span{color:var(--violet-ink);}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--violet-ink);}
+  h1{font-size:clamp(28px,5vw,37px);line-height:1.1;font-weight:800;letter-spacing:-0.03em;margin:10px 0 12px;text-wrap:balance;}
+  .cover p{font-size:17.5px;color:var(--muted);max-width:60ch;margin:0;line-height:1.55;}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:24px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .strip div{background:var(--paper);padding:13px 15px;}
+  .strip .n{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--violet-ink);}
+  .strip .l{font-size:12.5px;color:var(--faint);margin-top:1px;}
+
+  h2{font-size:15px;font-family:var(--mono);letter-spacing:.11em;text-transform:uppercase;color:var(--violet-ink);margin:36px 0 8px;display:flex;align-items:center;gap:12px;}
+  h2::after{content:"";height:1px;flex:1;background:var(--line);}
+  .lead{font-size:16.5px;color:var(--ink-soft);max-width:70ch;margin:0 0 16px;line-height:1.55;}
+  .lead b{color:var(--ink);font-weight:670;}
+
+  /* importance key points */
+  .points{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+  .pt{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--paper);break-inside:avoid;}
+  .pt .k{font-family:var(--mono);font-size:12px;color:var(--violet-ink);font-weight:600;}
+  .pt .h{font-weight:730;font-size:16px;margin:6px 0 5px;letter-spacing:-0.01em;}
+  .pt .d{font-size:14px;color:var(--muted);line-height:1.5;}
+
+  /* card grid (use cases / benefits) */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .fc{border:1px solid var(--line);border-radius:12px;padding:15px 18px;background:var(--paper);break-inside:avoid;}
+  .fc .nm{font-weight:740;font-size:16.5px;letter-spacing:-0.01em;display:flex;align-items:baseline;gap:9px;}
+  .fc .nm .dot{width:8px;height:8px;border-radius:50%;background:var(--violet);flex:none;transform:translateY(-1px);}
+  .fc .wh{color:var(--muted);font-size:14.5px;margin:6px 0 0;line-height:1.5;}
+  .fc.ben .nm .dot{background:var(--good);}
+
+  /* industries */
+  .chips{display:flex;flex-wrap:wrap;gap:9px;}
+  .ch{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:9px 15px;font-size:14.5px;color:var(--ink-soft);}
+  .ch b{color:var(--ink);font-weight:660;}
+
+  /* workflow */
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;}
+  .stp{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--paper);}
+  .stp .s{font-family:var(--mono);font-size:12px;color:var(--violet-ink);font-weight:600;}
+  .stp .t{font-weight:700;font-size:15px;margin:4px 0 3px;}
+  .stp .d{font-size:13px;color:var(--muted);line-height:1.4;}
+
+  .callout{margin-top:16px;background:linear-gradient(135deg,var(--wash),#faf8ff);border:1px solid #d9ccff;border-radius:13px;padding:18px 20px;font-size:16px;line-height:1.55;color:#3a2ba8;}
+  .callout b{color:var(--violet-ink);}
+
+  /* cost table */
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;}
+  table{border-collapse:collapse;width:100%;min-width:580px;font-size:14.5px;}
+  th{text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:12px 15px;background:#faf9ff;border-bottom:1px solid var(--line);}
+  td{padding:13px 15px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-soft);}
+  tr:last-child td{border-bottom:none;}
+  td .s{color:var(--ink);font-weight:700;display:block;font-size:15px;}
+  .c{font-family:var(--mono);color:var(--violet-ink);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .free{color:var(--good);}
+  .costnote{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-top:12px;}
+  .cn{border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:var(--paper);}
+  .cn .cnn{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--violet-ink);}
+  .cn .cnl{font-size:12.5px;color:var(--faint);margin-top:1px;}
+  .note{margin-top:12px;border-radius:11px;padding:12px 15px;font-size:13px;line-height:1.5;background:var(--warn-wash);border:1px solid #eecb92;color:#7a4a08;}
+
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;}
+
+  @media print{
+    body{background:#fff;font-size:11.5pt;}
+    .doc{max-width:100%;padding:0;}
+    .fc,.pt,.stp,.callout,.ch,.tw,.cn,table tr{break-inside:avoid;}
+    h2{break-after:avoid;}
+    .newpage{break-before:page;}
+    a{color:var(--ink);}
+    @page{size:A4;margin:15mm;}
+  }
+  @media (max-width:640px){.grid,.points{grid-template-columns:1fr;}.flow,.strip{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="cover">
+    <div class="brand"><span class="logo"></span><b><span>AdGap</span>IQ</b></div>
+    <div class="kicker">Product Overview · Digiveritaz</div>
+    <h1>Turn competitors' ads into your client's advantage.</h1>
+    <p>AdGapIQ analyses competitors' live Meta ads and tells the team exactly where a client is losing — and what to change to grow sales. Competitive ad strategy, automated.</p>
+    <div class="strip">
+      <div><div class="n">Hours → ~3 min</div><div class="l">per analysis</div></div>
+      <div><div class="n">&lt; $10 / mo</div><div class="l">running cost</div></div>
+      <div><div class="n">Every client</div><div class="l">monthly, at scale</div></div>
+      <div><div class="n">Any Meta advertiser</div><div class="l">industry-agnostic</div></div>
+    </div>
+  </div>
+
+  <h2>Why it matters</h2>
+  <p class="lead">On Meta, the <b>creative decides performance</b> — the same budget wins or loses on the ad itself. Knowing what's working for competitors is the fastest way to sharpen a client's ads, but done by hand it's slow, subjective, and rarely repeated. AdGapIQ makes competitive ad intelligence <b>fast, accurate and repeatable</b> — turning an occasional chore into a standing advantage.</p>
+  <div class="points">
+    <div class="pt"><div class="k">01</div><div class="h">Creative is the lever</div><div class="d">It analyses the exact thing that decides Meta ad results — the creative and its messaging.</div></div>
+    <div class="pt"><div class="k">02</div><div class="h">Automates the grind</div><div class="d">Hours of manual Ad Library research become a 3-minute, repeatable scan.</div></div>
+    <div class="pt"><div class="k">03</div><div class="h">Scales expertise</div><div class="d">A small team delivers agency-grade competitive strategy for every client — no extra headcount.</div></div>
+  </div>
+
+  <div class="newpage">
+  <h2>What you use it for</h2>
+  <p class="lead">The core use cases the Meta ads team runs day to day:</p>
+  <div class="grid">
+    <div class="fc"><div class="nm"><span class="dot"></span>Monthly benchmarking</div><div class="wh">Track how each client stacks up against rivals, every month.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Pre-campaign strategy</div><div class="wh">Decide what to make next, based on what's actually winning.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>New-business pitches</div><div class="wh">Audit a prospect vs their competitors to win the account.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Client onboarding</div><div class="wh">Establish the competitive baseline on day one.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Winning-ad research</div><div class="wh">Build a swipe file of proven creatives worth modelling.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Creative audits</div><div class="wh">Objectively score a client's ads and pinpoint the weak spots.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Client reporting</div><div class="wh">A clear, data-backed story for the creative changes you recommend.</div></div>
+    <div class="fc"><div class="nm"><span class="dot"></span>Competitive monitoring</div><div class="wh">Spot when a rival launches or scales a new ad.</div></div>
+  </div>
+  </div>
+
+  <h2>Where it applies</h2>
+  <p class="lead">AdGapIQ works for <b>any brand that advertises on Meta</b> — it's industry-agnostic. It's built for <b>ad agencies, in-house performance teams and brand marketers</b>. Common verticals:</p>
+  <div class="chips">
+    <span class="ch"><b>D2C &amp; e-commerce</b> — beauty, skincare, fashion, F&amp;B, supplements</span>
+    <span class="ch"><b>Real estate</b></span>
+    <span class="ch"><b>Healthcare &amp; wellness</b> — clinics, dental, aesthetics</span>
+    <span class="ch"><b>Education &amp; edtech</b> — coaching, courses</span>
+    <span class="ch"><b>Hospitality &amp; travel</b></span>
+    <span class="ch"><b>Fintech &amp; apps</b></span>
+    <span class="ch"><b>Local services &amp; franchises</b></span>
+    <span class="ch"><b>Automotive</b></span>
+  </div>
+
+  <div class="newpage">
+  <h2>The benefits</h2>
+  <div class="grid">
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Speed</div><div class="wh">Hours of manual research collapse into a ~3-minute scan.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Accuracy</div><div class="wh">Scrapes each brand's exact page — no wrong-brand noise.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Objectivity</div><div class="wh">Consistent 0–10 scoring with reasons, not gut feel.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Actionable</div><div class="wh">Specific fixes + next-campaign ideas, not just data.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Low cost</div><div class="wh">Under $10/month; scales with usage, not team size.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Scale</div><div class="wh">Cover every client, every month, without extra headcount.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Better results &amp; retention</div><div class="wh">Sharper creative → better client performance → stickier clients.</div></div>
+    <div class="fc ben"><div class="nm"><span class="dot"></span>Win new business</div><div class="wh">Walk into pitches with a ready-made competitive audit.</div></div>
+  </div>
+  </div>
+
+  <h2>How it works</h2>
+  <div class="flow">
+    <div class="stp"><div class="s">01</div><div class="t">Set up</div><div class="d">Add client + competitors &amp; their exact pages.</div></div>
+    <div class="stp"><div class="s">02</div><div class="t">Scan</div><div class="d">Pull every live ad — creative, copy, runtime.</div></div>
+    <div class="stp"><div class="s">03</div><div class="t">Score</div><div class="d">Flag winners; AI rates each creative.</div></div>
+    <div class="stp"><div class="s">04</div><div class="t">Compare</div><div class="d">Client vs rivals, aspect by aspect.</div></div>
+    <div class="stp"><div class="s">05</div><div class="t">Act</div><div class="d">Gaps + fixes + next-campaign ideas.</div></div>
+  </div>
+
+  <div class="newpage">
+  <h2>What it costs — per search &amp; monthly</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Service</th><th>What / when used</th><th>Unit cost</th><th>Est. monthly*</th></tr></thead>
+      <tbody>
+        <tr><td><span class="s">Apify</span>Meta Ad Library scraping</td><td>Pulls a brand's live ads on every scan / page search.</td><td><span class="c">~$3.40 / 1,000 ads</span></td><td><span class="c">~$5–6</span></td></tr>
+        <tr><td><span class="s">Google Gemini</span>AI scoring &amp; comparison</td><td>Reads each creative, writes the comparison &amp; ratings.</td><td><span class="c free">Free tier</span> · paid ~$0.30/$2.50 per 1M tok</td><td><span class="c free">~$0 (free tier)</span></td></tr>
+        <tr><td><span class="s">Groq</span>fallback AI</td><td>Backup engine if Gemini is unavailable.</td><td><span class="c free">Free tier</span></td><td><span class="c free">$0</span></td></tr>
+        <tr><td><span class="s">Anthropic Claude</span>premium fallback</td><td>Optional, highest-quality write-ups (not in use).</td><td><span class="c">~$3 / $15 per 1M</span></td><td><span class="c">$0</span></td></tr>
+        <tr><td><span class="s">PostgreSQL</span>database</td><td>Stores clients, ads, scores, history.</td><td><span class="c free">Free</span></td><td><span class="c free">$0</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="costnote">
+    <div class="cn"><div class="cnn">~$0.0034</div><div class="cnl">per ad scraped</div></div>
+    <div class="cn"><div class="cnn">~$0.10</div><div class="cnl">per page search (~30 ads)</div></div>
+    <div class="cn"><div class="cnn">~$0.26</div><div class="cnl">per full scan (~78 ads)</div></div>
+  </div>
+  <div class="note">* Estimate for ~20 clients × 1 scan/month + ad-hoc comparisons. AI is on the free tier today; even on paid pricing a comparison is a few cents.</div>
+
+  <div class="callout"><b>In short:</b> AdGapIQ lets a small team deliver <b>agency-grade competitive ad intelligence</b> for every client — fast, accurate, industry-agnostic, and under <b>$10/month</b>. It turns competitor research from an occasional task into a repeatable edge that sharpens creative, wins pitches, and grows client results.</div>
+  </div>
+
+  <footer>AdGapIQ — Product Overview · competitor ad intelligence for the Digiveritaz Meta ads team · working prototype, verified end-to-end.</footer>
+
+</div>
+</body>
+</html>

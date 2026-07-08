@@ -1,0 +1,397 @@
+// ─────────────────────────────────────────────────────────────────────────
+// AdGapIQ — data model
+//
+// Conventions follow the reference project (Insta Listener / ReputeIQ):
+// cuid ids, createdAt/updatedAt, enums, dedup via @@unique, cascade deletes.
+//
+// DB = PostgreSQL + pgvector (per-client learning memory needs vectors).
+// Vector columns use `Unsupported("vector(1536)")`; similarity search runs via
+// raw SQL ($queryRaw) since Prisma has no native vector operators yet.
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Enable pgvector for the learning-loop memory. Commented out for local dev
+  // on a vanilla Postgres without the extension; re-enable on Neon/Supabase
+  // (both ship pgvector) and uncomment the `embedding` fields below.
+  // extensions = [vector]
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// TENANCY — Agency ▸ Client ▸ (Competitors, Scans)
+// Deleting a Client cascades to ALL of its data (the offboard-purge).
+// ════════════════════════════════════════════════════════════════════════
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  clients   Client[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id       String @id @default(cuid())
+  agency   Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  agencyId String
+  name     String
+
+  // The client's OWN ad presence — so we scrape their ads from the Ad Library
+  // and put them on the other side of the comparison.
+  fbPageId   String?
+  fbPageName String?
+  igHandle   String?
+
+  context     ClientContext?
+  knowledge   ClientKnowledge[]
+  competitors Competitor[]
+  scanRuns    ScanRun[]
+  ads         Ad[]
+  feedback    Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([agencyId])
+}
+
+/// Persistent brand context — AI-drafted, team-edited, injected into every
+/// analysis so output is on-brand. 1:1 with Client; deleted with it.
+model ClientContext {
+  id       String @id @default(cuid())
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String @unique
+
+  industry       String?
+  targetAudience String?
+  geography      String?
+  currency       String  @default("INR")
+  usp            String?
+  products       String?
+  brandVoice     String?
+  doNots         String?
+  positioning    String?
+  goals          String?
+  brandBrief     String?
+  sourceWebsite  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Per-client vector memory — the learning loop. Purged with the client.
+model ClientKnowledge {
+  id        String                       @id @default(cuid())
+  client    Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
+  type      KnowledgeType
+  text      String
+  // embedding Unsupported("vector(1536)")?  // re-enable with pgvector (learning loop)
+  createdAt DateTime                      @default(now())
+
+  @@index([clientId, type])
+}
+
+enum KnowledgeType {
+  INSIGHT
+  FEEDBACK
+  PATTERN
+  OUTCOME
+}
+
+model Competitor {
+  id         String  @id @default(cuid())
+  client     Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String
+  name       String
+  fbPageId   String?
+  fbPageName String?
+  igHandle   String?
+
+  ads         Ad[]
+  assessments CompetitorAssessment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// SCANS & ADS — append-only history (Ad = stable identity, AdObservation =
+// time-series). Powers the Winning Ad Score's "survival across scans".
+// ════════════════════════════════════════════════════════════════════════
+
+model ScanRun {
+  id       String     @id @default(cuid())
+  client   Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  status   ScanStatus @default(PENDING)
+
+  adsFetched   Int     @default(0)
+  scrapeCost   Float   @default(0)
+  analysisCost Float   @default(0)
+  error        String?
+
+  observations AdObservation[]
+  comparison   Comparison?
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([clientId, startedAt])
+}
+
+enum ScanStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model Ad {
+  id       String @id @default(cuid())
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  advertiserType AdvertiserType
+  competitor     Competitor?    @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  competitorId   String?
+  advertiserName String
+  /// The REAL Facebook page this ad belongs to (from the Ad Library). Lets us
+  /// filter out keyword-search pollution and show/link the true advertiser.
+  advertiserPageId   String?
+  advertiserPageName String?
+
+  adArchiveId  String
+  adLibraryUrl String?
+
+  // Creative
+  mediaType      MediaType @default(UNKNOWN)
+  primaryText    String?
+  headline       String?
+  description    String?
+  ctaText        String?
+  landingUrl     String?
+  imageUrl       String?
+  videoUrl       String?
+  storedMediaKey String?
+  thumbnailKey   String?
+  creativeHash   String?
+
+  // Lifecycle / winner signals (latest snapshot for quick reads)
+  startDate      DateTime?
+  firstSeenAt    DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+  isActiveLatest Boolean   @default(true)
+  daysLiveLatest Int?
+  winningScore   Float?
+  isProvenWinner Boolean   @default(false)
+
+  observations AdObservation[]
+  analysis     AdAnalysis?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, advertiserName, adArchiveId])
+  @@index([clientId, isProvenWinner])
+  @@index([creativeHash])
+}
+
+enum AdvertiserType {
+  CLIENT
+  COMPETITOR
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  REEL
+  UNKNOWN
+}
+
+model AdObservation {
+  id        String  @id @default(cuid())
+  ad        Ad      @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adId      String
+  scanRun   ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  scanRunId String
+
+  observedAt      DateTime @default(now())
+  isActive        Boolean  @default(true)
+  daysLive        Int?
+  deploymentCount Int      @default(1)
+  likes           Int?
+  comments        Int?
+  winningScore    Float?
+
+  @@unique([adId, scanRunId])
+  @@index([scanRunId])
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// ANALYSIS — the Creative Teardown (Gemini watches video, Claude synthesizes)
+// ════════════════════════════════════════════════════════════════════════
+
+model AdAnalysis {
+  id   String @id @default(cuid())
+  ad   Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adId String @unique
+
+  analyzedBy   String?
+  teardown     Json
+  transcript   String?
+  onScreenText String?
+
+  hookScore       Int?
+  visualScore     Int?
+  textScore       Int?
+  offerScore      Int?
+  ctaScore        Int?
+  persuasionScore Int?
+  overallScore    Int?
+  whyItWorks      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// COMPARISON — per-aspect cards + competitor rating + overall + sales growth
+// ════════════════════════════════════════════════════════════════════════
+
+model Comparison {
+  id        String  @id @default(cuid())
+  scanRun   ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  scanRunId String  @unique
+
+  /// 0–100 headline gauge (how big the opportunity/gap is).
+  gapScore Int?
+  /// AI TL;DR shown at the top of the dashboard (marketing language).
+  tldr     String?
+  /// Plain-English overall summary of the whole comparison.
+  overallSummary String?
+  /// "Where we're lacking" — ranked gaps (markdown).
+  lackingSummary String?
+  /// What to improve to GROW SALES — marketing-angle action plan (markdown).
+  salesGrowthPlan String?
+  /// Bold next-campaign + steal-and-improve creative concepts (markdown).
+  suggestions String?
+
+  dimensions  ComparisonDimension[]
+  competitors CompetitorAssessment[]
+
+  createdAt DateTime @default(now())
+}
+
+/// Per-competitor scorecard inside a comparison: a 1–10 rating of how strong
+/// their advertising is, plus a short marketing assessment.
+model CompetitorAssessment {
+  id           String     @id @default(cuid())
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  comparisonId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  competitorId String
+
+  /// 1–10 overall rating of this competitor's ad strength.
+  rating Int
+  /// What makes them strong/weak, in marketing terms.
+  summary String?
+  /// Their single biggest strength and the one thing to learn from them.
+  topStrength String?
+  /// How many of their ads we judged "proven winners".
+  winnerCount Int @default(0)
+
+  @@unique([comparisonId, competitorId])
+}
+
+model ComparisonDimension {
+  id           String       @id @default(cuid())
+  comparison   Comparison   @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  comparisonId String
+  dimension    DimensionKey
+
+  clientScore         Int?
+  competitorBestScore Int?
+  mark                ComparisonMark
+  reasoning           String?
+  fix                 String?
+
+  evidenceClientAdId     String?
+  evidenceCompetitorAdId String?
+
+  @@index([comparisonId])
+}
+
+enum ComparisonMark {
+  LEAD
+  PAR
+  BEHIND
+}
+
+enum DimensionKey {
+  AD_VOLUME
+  PROVEN_WINNERS
+  FORMAT_MIX
+  CREATIVE_QUALITY
+  HOOK
+  ON_SCREEN_TEXT
+  OFFER_CLARITY
+  CTA
+  MESSAGING_ANGLES
+  EMOTIONAL_APPEAL
+  SOCIAL_PROOF
+  CREATIVE_FRESHNESS
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// LEARNING LOOP — feedback + cross-client playbook
+// ════════════════════════════════════════════════════════════════════════
+
+model Feedback {
+  id         String         @id @default(cuid())
+  client     Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String
+  targetType FeedbackTarget
+  targetId   String
+  vote       FeedbackVote
+  note       String?
+  outcome    String?
+  createdAt  DateTime       @default(now())
+
+  @@index([clientId, targetType])
+}
+
+enum FeedbackTarget {
+  SUGGESTION
+  DIMENSION
+  AD
+}
+
+enum FeedbackVote {
+  UP
+  DOWN
+}
+
+/// Cross-client, anonymized winning-pattern playbook (by industry). NOT tied
+/// to a Client — survives offboarding. Improves suggestions for everyone.
+model WinningPattern {
+  id           String                       @id @default(cuid())
+  industry     String?
+  pattern      String
+  description  String?
+  // embedding    Unsupported("vector(1536)")?  // re-enable with pgvector (learning loop)
+  supportCount Int                          @default(1)
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+
+  @@index([industry])
+}
