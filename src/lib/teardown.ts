@@ -9,7 +9,7 @@
  */
 import { completeJson, llmConfigured } from "./llm";
 import { integrations } from "./env";
-import { geminiGenerate, fetchImagePart, fetchVideoPart } from "./gemini";
+import { geminiGenerate, fetchImagePart } from "./gemini";
 
 /** The 10 radar axes (the "must-have" chart). */
 export const RADAR_DIMS = [
@@ -156,35 +156,35 @@ ${scaleNote}`;
 }
 JSON only.`;
 
+  const fmt = (a: DuelAdInput, i: number) => ({
+    index: i,
+    role: i === 0 ? "YOUR BRAND" : "COMPETITOR",
+    advertiser: a.advertiserName,
+    format: a.mediaType,
+    daysLive: a.daysLive,
+    headline: a.headline,
+    primaryText: a.primaryText?.slice(0, 400) ?? null,
+    cta: a.ctaText,
+  });
+  const textPrompt = `${intro}\n\nADS:\n${JSON.stringify(ads.map(fmt))}\n\n${schema}`;
+
   let ai: { ads?: AIColumn[]; insights?: AIInsights };
   if (integrations.gemini) {
     // Multimodal: let Gemini actually SEE each ad creative.
+    try {
     const parts: Array<Record<string, unknown>> = [{ text: intro }];
     for (let i = 0; i < ads.length; i++) {
       const ad = ads[i];
-      // Try the actual video so Gemini watches the whole ad; Meta's CDN usually
-      // blocks server-side video downloads (403), so we fall back to the
-      // thumbnail frame — and label EXACTLY what the model got so it never
-      // invents audio/motion it can't actually see.
+      // Meta's CDN blocks server-side video downloads, so for video ads we
+      // analyse the cover/thumbnail frame — labelled honestly so the AI never
+      // invents motion or audio it can't see.
       const isVideo = ad.mediaType === "VIDEO" || ad.mediaType === "REEL";
-      let part: Record<string, unknown> | null = null;
-      let mode: "video" | "frame" | "image" | "none" = "none";
-      if (isVideo && ad.videoUrl) {
-        part = await fetchVideoPart(ad.videoUrl);
-        if (part) mode = "video";
-      }
-      if (!part && ad.imageUrl) {
-        part = await fetchImagePart(ad.imageUrl);
-        if (part) mode = isVideo ? "frame" : "image";
-      }
-      const mediaLabel =
-        mode === "video"
-          ? "FULL VIDEO (frames + audio)"
-          : mode === "frame"
-          ? "STILL FRAME of a video ad — no motion or audio available"
-          : mode === "image"
-          ? "static image"
-          : "no media";
+      const part = ad.imageUrl ? await fetchImagePart(ad.imageUrl) : null;
+      const mediaLabel = isVideo
+        ? "video ad — you see its cover FRAME only (no motion or audio)"
+        : part
+        ? "static image"
+        : "no media";
       parts.push({
         text: `\n=== AD ${i} — ${i === 0 ? "YOUR BRAND" : "COMPETITOR"}: ${ad.advertiserName} (${ad.mediaType}) — ${mediaLabel} ===`,
       });
@@ -194,27 +194,23 @@ JSON only.`;
       });
     }
     parts.push({ text: `\n${schema}` });
-    const raw = await geminiGenerate(parts);
-    ai = parseColumnsJson(raw);
+      const raw = await geminiGenerate(parts);
+      ai = parseColumnsJson(raw);
+    } catch {
+      // Gemini failed (bad JSON, media fetch, etc.) — fall back to the text LLM.
+      ai = await completeJson<{ ads: AIColumn[]; insights?: AIInsights }>(textPrompt, {
+        maxTokens: 3500,
+      });
+    }
   } else {
-    const fmt = (a: DuelAdInput, i: number) => ({
-      index: i,
-      role: i === 0 ? "YOUR BRAND" : "COMPETITOR",
-      advertiser: a.advertiserName,
-      format: a.mediaType,
-      daysLive: a.daysLive,
-      headline: a.headline,
-      primaryText: a.primaryText?.slice(0, 400) ?? null,
-      cta: a.ctaText,
+    ai = await completeJson<{ ads: AIColumn[]; insights?: AIInsights }>(textPrompt, {
+      maxTokens: 3500,
     });
-    ai = await completeJson<{ ads: AIColumn[]; insights?: AIInsights }>(
-      `${intro}\n\nADS:\n${JSON.stringify(ads.map(fmt))}\n\n${schema}`,
-      { maxTokens: 3500 }
-    );
   }
 
   const columns: CompareColumn[] = ads.map((ad, i) => {
-    const found = ai.ads?.find((x) => x.index === i);
+    // Match by echoed index; fall back to positional if the model omitted it.
+    const found = ai.ads?.find((x) => x.index === i) ?? ai.ads?.[i];
     const scores = {} as Record<AspectKey, ColumnScore>;
     let sum = 0;
     let count = 0;

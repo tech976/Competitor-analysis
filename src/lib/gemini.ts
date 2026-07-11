@@ -105,34 +105,6 @@ export async function fetchImagePart(
   }
 }
 
-/**
- * Download a VIDEO into a Gemini inline video part so the model watches the
- * whole ad (frames + audio). Returns null if it fails or is too large for an
- * inline request (~20MB cap) — the caller then falls back to the thumbnail.
- */
-export async function fetchVideoPart(
-  url: string,
-  maxBytes = 14_000_000
-): Promise<Record<string, unknown> | null> {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    const len = Number(res.headers.get("content-length") || 0);
-    if (len && len > maxBytes) return null; // skip download if we know it's too big
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > maxBytes) return null;
-    const mimeType = res.headers.get("content-type") || "video/mp4";
-    return {
-      inline_data: {
-        mime_type: mimeType.startsWith("video/") ? mimeType : "video/mp4",
-        data: buf.toString("base64"),
-      },
-    };
-  } catch {
-    return null;
-  }
-}
-
 /** Analyse a video ad end-to-end → parsed teardown JSON. */
 export async function analyzeVideoAd(videoUrl: string): Promise<unknown> {
   const { data, mimeType } = await fetchAsBase64(videoUrl);

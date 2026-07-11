@@ -71,6 +71,16 @@ export async function runScan(clientId: string): Promise<ScanSummary> {
   });
   if (!client) throw new Error("Client not found.");
 
+  // Recover scans that died mid-run (e.g. a serverless timeout) so the UI and
+  // dashboard don't show "running" forever.
+  await prisma.scanRun.updateMany({
+    where: {
+      status: { in: ["RUNNING", "PENDING"] },
+      startedAt: { lt: new Date(Date.now() - 15 * 60_000) },
+    },
+    data: { status: "FAILED", error: "Scan interrupted or timed out.", finishedAt: new Date() },
+  });
+
   const run = await prisma.scanRun.create({
     data: { clientId, status: "RUNNING" },
   });
@@ -118,9 +128,18 @@ export async function runScan(clientId: string): Promise<ScanSummary> {
       // Page-scoped scrapes are already clean. Name-only (keyword) scrapes can
       // pull unrelated advertisers, so keep just the page that best matches the
       // brand — this strips out keyword-search pollution.
-      const ads = adv.pageId
+      const filtered = adv.pageId
         ? result.ads
         : filterToBrand(result.ads, adv.query, adv.name);
+      // Dedupe by ad id — the actor can return the same ad twice (pagination /
+      // collation), which would violate the (adId, scanRun) unique on the
+      // observation and abort the rest of this advertiser's ads.
+      const seenArchive = new Set<string>();
+      const ads = filtered.filter((a) => {
+        if (seenArchive.has(a.adArchiveId)) return false;
+        seenArchive.add(a.adArchiveId);
+        return true;
+      });
 
       // Count how many ads share each creative (a scaling signal we derive
       // ourselves; the actor's `collationCount` is preferred when present).

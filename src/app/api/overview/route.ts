@@ -23,22 +23,19 @@ export async function GET() {
     },
   });
 
-  // Top competitors by their most recent assessment rating.
+  // Top competitors by their BEST rating across all assessments.
   const assessments = await prisma.competitorAssessment.findMany({
     orderBy: { id: "desc" },
-    take: 50,
+    take: 300,
     include: { competitor: { select: { name: true } } },
   });
-  const seen = new Set<string>();
-  const topCompetitors: Array<{ name: string; rating: number }> = [];
+  const byName = new Map<string, { name: string; rating: number }>();
   for (const a of assessments) {
-    const name = a.competitor.name;
-    if (seen.has(name.toLowerCase())) continue;
-    seen.add(name.toLowerCase());
-    topCompetitors.push({ name, rating: a.rating });
-    if (topCompetitors.length >= 5) break;
+    const key = a.competitor.name.toLowerCase();
+    const cur = byName.get(key);
+    if (!cur || a.rating > cur.rating) byName.set(key, { name: a.competitor.name, rating: a.rating });
   }
-  topCompetitors.sort((x, y) => y.rating - x.rating);
+  const topCompetitors = [...byName.values()].sort((x, y) => y.rating - x.rating).slice(0, 5);
 
   return NextResponse.json({
     kpis: {

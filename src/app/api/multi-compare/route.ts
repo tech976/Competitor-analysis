@@ -43,7 +43,7 @@ function toInput(a: {
 export async function POST(req: Request) {
   if (!llmConfigured()) {
     return NextResponse.json(
-      { error: "No LLM configured. Set GROQ_API_KEY to run the comparison." },
+      { error: "No AI configured. Set an AI key (Gemini or Groq) to run the comparison." },
       { status: 503 }
     );
   }

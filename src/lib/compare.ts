@@ -144,7 +144,7 @@ ${JSON.stringify(payload)}`;
         dimension: d.dimension as Dimension,
         clientScore: clampInt(d.clientScore, 0, 10),
         competitorBestScore: clampInt(d.competitorBestScore, 0, 10),
-        mark: d.mark,
+        mark: normMark(d.mark),
         reasoning: str(d.reasoning),
         fix: str(d.fix),
       },
@@ -154,9 +154,7 @@ ${JSON.stringify(payload)}`;
   // Per-competitor 1–10 ratings (replace previous).
   await prisma.competitorAssessment.deleteMany({ where: { comparisonId: comparison.id } });
   for (const ca of ai.competitors ?? []) {
-    const comp = run.client.competitors.find(
-      (c) => c.name.toLowerCase() === ca.name.toLowerCase()
-    );
+    const comp = run.client.competitors.find((c) => norm(c.name) === norm(ca.name));
     if (!comp) continue;
     await prisma.competitorAssessment.create({
       data: {
@@ -175,6 +173,17 @@ ${JSON.stringify(payload)}`;
 
 function clampInt(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.round(Number(n) || 0)));
+}
+
+/** Normalize a brand name for fuzzy matching (strip case + punctuation). */
+function norm(s: string): string {
+  return (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Coerce an LLM-returned mark to a valid enum value (default PAR). */
+function normMark(m: unknown): "LEAD" | "PAR" | "BEHIND" {
+  const u = String(m ?? "").toUpperCase();
+  return u === "LEAD" || u === "BEHIND" ? u : "PAR";
 }
 
 /** Coerce an LLM field (string | string[] | object) into a markdown string. */

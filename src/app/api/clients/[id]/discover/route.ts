@@ -14,7 +14,7 @@ export async function POST(
   const { id } = await params;
   if (!llmConfigured()) {
     return NextResponse.json(
-      { error: "No AI configured — set GEMINI_API_KEY to discover competitors." },
+      { error: "No AI configured — set an AI key (Gemini or Groq) to discover competitors." },
       { status: 503 }
     );
   }
