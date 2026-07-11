@@ -136,7 +136,7 @@ export async function compareAdColumns(
   if (!llmConfigured()) return null;
 
   const ads = [clientAd, ...competitorAds];
-  const scaleNote = `Scoring scale — calibrate CONSISTENTLY across all ads: 0-2 absent/poor · 3-4 weak · 5-6 average · 7-8 strong · 9-10 exceptional. Base EVERY score on the actual creative AND the ad copy — never on assumptions. For VIDEO ads you are given the FULL video (frames + audio): judge the hook in the first 3 seconds, pacing/editing, on-screen text, voiceover/script and music from what you actually watch and hear. For static images, score only what's visible and set "na": true for aspects that don't apply (e.g. Script/Voiceover) — N/A aspects are excluded from the overall score.`;
+  const scaleNote = `Scoring scale — calibrate CONSISTENTLY across all ads: 0-2 absent/poor · 3-4 weak · 5-6 average · 7-8 strong · 9-10 exceptional. Base EVERY score on the media you are ACTUALLY given plus the ad copy — never on assumptions. If an ad is labelled FULL VIDEO, judge hook/pacing/voiceover/music from what you watch and hear. If it is a STILL FRAME of a video ad, or a static image, you see only ONE image — do NOT invent audio, motion or voiceover; set "na": true for Script/Voiceover unless the on-screen text clearly conveys the message. N/A aspects are excluded from the overall score.`;
 
   const intro = `You are a senior performance-marketing analyst scoring Meta ads. Ad index 0 is OUR client's ad; the rest are competitors.
 CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}
@@ -162,16 +162,33 @@ JSON only.`;
     const parts: Array<Record<string, unknown>> = [{ text: intro }];
     for (let i = 0; i < ads.length; i++) {
       const ad = ads[i];
-      parts.push({
-        text: `\n=== AD ${i} — ${i === 0 ? "YOUR BRAND" : "COMPETITOR"}: ${ad.advertiserName} (${ad.mediaType}) ===`,
-      });
-      // For video ads, send the actual video so Gemini watches the whole ad
-      // (frames + audio); fall back to the thumbnail if it fails or is too big.
+      // Try the actual video so Gemini watches the whole ad; Meta's CDN usually
+      // blocks server-side video downloads (403), so we fall back to the
+      // thumbnail frame — and label EXACTLY what the model got so it never
+      // invents audio/motion it can't actually see.
       const isVideo = ad.mediaType === "VIDEO" || ad.mediaType === "REEL";
       let part: Record<string, unknown> | null = null;
-      if (isVideo && ad.videoUrl) part = await fetchVideoPart(ad.videoUrl);
-      if (!part && ad.imageUrl) part = await fetchImagePart(ad.imageUrl);
-      parts.push(part ?? { text: "(no media available — score visual aspects conservatively)" });
+      let mode: "video" | "frame" | "image" | "none" = "none";
+      if (isVideo && ad.videoUrl) {
+        part = await fetchVideoPart(ad.videoUrl);
+        if (part) mode = "video";
+      }
+      if (!part && ad.imageUrl) {
+        part = await fetchImagePart(ad.imageUrl);
+        if (part) mode = isVideo ? "frame" : "image";
+      }
+      const mediaLabel =
+        mode === "video"
+          ? "FULL VIDEO (frames + audio)"
+          : mode === "frame"
+          ? "STILL FRAME of a video ad — no motion or audio available"
+          : mode === "image"
+          ? "static image"
+          : "no media";
+      parts.push({
+        text: `\n=== AD ${i} — ${i === 0 ? "YOUR BRAND" : "COMPETITOR"}: ${ad.advertiserName} (${ad.mediaType}) — ${mediaLabel} ===`,
+      });
+      parts.push(part ?? { text: "(no media — score visual aspects conservatively)" });
       parts.push({
         text: `Copy: ${ad.primaryText?.slice(0, 400) ?? "—"}\nHeadline: ${ad.headline ?? "—"}\nCTA: ${ad.ctaText ?? "—"}\nDays live: ${ad.daysLive ?? "—"}`,
       });
