@@ -23,6 +23,7 @@ function toInput(a: {
   primaryText: string | null;
   ctaText: string | null;
   imageUrl: string | null;
+  videoUrl: string | null;
 }): DuelAdInput {
   return {
     id: a.id,
@@ -34,6 +35,7 @@ function toInput(a: {
     primaryText: a.primaryText,
     ctaText: a.ctaText,
     imageUrl: a.imageUrl,
+    videoUrl: a.videoUrl,
   };
 }
 

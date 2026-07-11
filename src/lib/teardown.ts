@@ -9,7 +9,7 @@
  */
 import { completeJson, llmConfigured } from "./llm";
 import { integrations } from "./env";
-import { geminiGenerate, fetchImagePart } from "./gemini";
+import { geminiGenerate, fetchImagePart, fetchVideoPart } from "./gemini";
 
 /** The 10 radar axes (the "must-have" chart). */
 export const RADAR_DIMS = [
@@ -136,7 +136,7 @@ export async function compareAdColumns(
   if (!llmConfigured()) return null;
 
   const ads = [clientAd, ...competitorAds];
-  const scaleNote = `Scoring scale — calibrate CONSISTENTLY across all ads: 0-2 absent/poor · 3-4 weak · 5-6 average · 7-8 strong · 9-10 exceptional. Base EVERY score on what you actually SEE in the creative image AND the ad copy — never on assumptions. If an aspect genuinely doesn't apply to the format (e.g. Script/Voiceover on a static image), set "na": true — it is excluded from the overall score.`;
+  const scaleNote = `Scoring scale — calibrate CONSISTENTLY across all ads: 0-2 absent/poor · 3-4 weak · 5-6 average · 7-8 strong · 9-10 exceptional. Base EVERY score on the actual creative AND the ad copy — never on assumptions. For VIDEO ads you are given the FULL video (frames + audio): judge the hook in the first 3 seconds, pacing/editing, on-screen text, voiceover/script and music from what you actually watch and hear. For static images, score only what's visible and set "na": true for aspects that don't apply (e.g. Script/Voiceover) — N/A aspects are excluded from the overall score.`;
 
   const intro = `You are a senior performance-marketing analyst scoring Meta ads. Ad index 0 is OUR client's ad; the rest are competitors.
 CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}
@@ -165,8 +165,13 @@ JSON only.`;
       parts.push({
         text: `\n=== AD ${i} — ${i === 0 ? "YOUR BRAND" : "COMPETITOR"}: ${ad.advertiserName} (${ad.mediaType}) ===`,
       });
-      const part = ad.imageUrl ? await fetchImagePart(ad.imageUrl) : null;
-      parts.push(part ?? { text: "(no image available — score visual aspects conservatively)" });
+      // For video ads, send the actual video so Gemini watches the whole ad
+      // (frames + audio); fall back to the thumbnail if it fails or is too big.
+      const isVideo = ad.mediaType === "VIDEO" || ad.mediaType === "REEL";
+      let part: Record<string, unknown> | null = null;
+      if (isVideo && ad.videoUrl) part = await fetchVideoPart(ad.videoUrl);
+      if (!part && ad.imageUrl) part = await fetchImagePart(ad.imageUrl);
+      parts.push(part ?? { text: "(no media available — score visual aspects conservatively)" });
       parts.push({
         text: `Copy: ${ad.primaryText?.slice(0, 400) ?? "—"}\nHeadline: ${ad.headline ?? "—"}\nCTA: ${ad.ctaText ?? "—"}\nDays live: ${ad.daysLive ?? "—"}`,
       });
@@ -259,6 +264,8 @@ export interface DuelAdInput {
   ctaText: string | null;
   /** Creative image (or video thumbnail) — sent to Gemini vision for scoring. */
   imageUrl: string | null;
+  /** Video file — for video ads we send this so Gemini watches the whole ad. */
+  videoUrl: string | null;
 }
 
 interface AISide {
