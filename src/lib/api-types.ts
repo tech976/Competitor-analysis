@@ -28,6 +28,13 @@ export interface ClientListItem {
   createdAt: string;
 }
 
+export interface DiscoveredCompetitor {
+  name: string;
+  closeness: number;
+  why: string;
+  alreadyAdded: boolean;
+}
+
 export interface CompetitorLite {
   id: string;
   name: string;

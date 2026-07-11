@@ -13,6 +13,7 @@ import {
   MapPin,
   AlertTriangle,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import type { ClientDetail, AdLite, CompetitorLite } from "@/lib/api-types";
 import { del } from "@/lib/client";
@@ -23,6 +24,7 @@ import AddCompetitorForm from "@/components/AddCompetitorForm";
 import ComparisonView from "@/components/ComparisonView";
 import AdCard from "@/components/AdCard";
 import PageResolver, { type ResolverTarget } from "@/components/PageResolver";
+import DiscoverCompetitors from "@/components/DiscoverCompetitors";
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +41,7 @@ export default function ClientDetailPage() {
   );
 
   const [resolver, setResolver] = useState<ResolverTarget | null>(null);
+  const [showDiscover, setShowDiscover] = useState(false);
 
   const client = data?.client;
   const comparison = client?.scanRuns[0]?.comparison ?? null;
@@ -153,7 +156,14 @@ export default function ClientDetailPage() {
             {c.name}
           </button>
         ))}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            className="btn-ghost h-9 px-3 text-xs"
+            onClick={() => setShowDiscover(true)}
+            title="Let AI suggest the closest competitors"
+          >
+            <Sparkles className="h-4 w-4 text-accent-soft" /> Discover
+          </button>
           <AddCompetitorForm clientId={client.id} />
         </div>
       </FadeIn>
@@ -195,6 +205,9 @@ export default function ClientDetailPage() {
       />
 
       {resolver && <PageResolver target={resolver} onClose={() => setResolver(null)} />}
+      {showDiscover && (
+        <DiscoverCompetitors clientId={client.id} onClose={() => setShowDiscover(false)} />
+      )}
     </div>
   );
 }
