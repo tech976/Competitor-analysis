@@ -52,7 +52,7 @@ export default function AlertsPage() {
         <div className="space-y-8">
           <Section
             title="New competitor ads"
-            hint="Recently launched (last ~3 weeks)"
+            hint="Freshly launched — live 21 days or less"
             Icon={Sparkle}
             ads={newAds}
           />

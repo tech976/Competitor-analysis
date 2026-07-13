@@ -8,12 +8,19 @@ export const dynamic = "force-dynamic";
  *  - NEW: competitor ads first seen recently (just launched)
  *  - SCALING: ads whose winning score / creative count rose across scans
  */
-export async function GET() {
-  const since = new Date(Date.now() - 21 * 86_400_000); // ~3 weeks
+/** An ad counts as "just launched" if it has been live this many days or fewer. */
+const NEW_AD_MAX_DAYS = 21;
 
+export async function GET() {
+  // "New" = recently LAUNCHED on Meta (small days-live), not merely recently
+  // seen by our scanner. `firstSeenAt` is when WE first recorded the ad, so an
+  // old ad picked up in a fresh scan would wrongly look new — gate on real age.
   const newAdsRaw = await prisma.ad.findMany({
-    where: { advertiserType: "COMPETITOR", firstSeenAt: { gte: since } },
-    orderBy: [{ isProvenWinner: "desc" }, { firstSeenAt: "desc" }],
+    where: {
+      advertiserType: "COMPETITOR",
+      daysLiveLatest: { not: null, lte: NEW_AD_MAX_DAYS },
+    },
+    orderBy: [{ daysLiveLatest: "asc" }, { firstSeenAt: "desc" }],
     take: 24,
     include: { client: { select: { id: true, name: true } } },
   });
