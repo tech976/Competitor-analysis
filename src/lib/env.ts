@@ -5,6 +5,16 @@
  * helper and surfaces a clear error only when actually used.
  */
 
+/** All configured Gemini keys, in priority order (rotated on 429 / quota). */
+const GEMINI_KEYS = [
+  process.env.GEMINI_API_KEY,
+  process.env.GEMINI_API_KEY_2,
+  process.env.GEMINI_API_KEY_3,
+  process.env.GEMINI_API_KEY_4,
+]
+  .map((k) => (k ?? "").trim())
+  .filter(Boolean);
+
 export const env = {
   apifyToken: process.env.APIFY_TOKEN ?? "",
   apifyMetaAdsActor:
@@ -20,9 +30,14 @@ export const env = {
   anthropicKey: process.env.ANTHROPIC_API_KEY ?? "",
   anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
 
-  // Gemini — video ad analysis.
-  geminiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  // Gemini — video analysis + web-grounded research. Supports MULTIPLE keys
+  // (GEMINI_API_KEY, _2, _3, _4), rotated round-robin with 429 failover to
+  // spread the free-tier quota across projects/accounts.
+  geminiKeys: GEMINI_KEYS,
+  geminiKey: GEMINI_KEYS[0] ?? "", // back-compat: the first key
+  // `gemini-flash-latest` is an always-current alias available to both old and
+  // new projects (version-pinned models like 2.5-flash get gated for new keys).
+  geminiModel: process.env.GEMINI_MODEL || "gemini-flash-latest",
 
   pricePer1kAds: Number(process.env.PRICE_PER_1K_ADS || "3.40"),
   winnerDaysThreshold: Number(process.env.WINNER_DAYS_THRESHOLD || "30"),
@@ -64,12 +79,12 @@ export function requireAnthropicKey(): string {
 }
 
 export function requireGeminiKey(): string {
-  if (!env.geminiKey) {
+  if (env.geminiKeys.length === 0) {
     throw new MissingCredentialError(
-      "GEMINI_API_KEY is not set. Add it to your .env to enable deep video-ad analysis."
+      "GEMINI_API_KEY is not set. Add it to your .env to enable deep research & video-ad analysis."
     );
   }
-  return env.geminiKey;
+  return env.geminiKeys[0];
 }
 
 /** True when a given integration is configured — used to gate UI affordances. */
@@ -84,10 +99,12 @@ export const integrations = {
     return Boolean(env.anthropicKey);
   },
   get gemini() {
-    return Boolean(env.geminiKey);
+    return env.geminiKeys.length > 0;
   },
   /** Any text-LLM available for the comparison synthesis. */
   get llm() {
-    return Boolean(env.groqKey || env.groqKey2 || env.geminiKey || env.anthropicKey);
+    return Boolean(
+      env.groqKey || env.groqKey2 || env.geminiKeys.length > 0 || env.anthropicKey
+    );
   },
 };

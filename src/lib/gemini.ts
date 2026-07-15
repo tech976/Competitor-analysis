@@ -46,34 +46,64 @@ interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
 }
 
-/** Low-level: send parts to Gemini generateContent and return the text. */
+// Round-robin cursor so request bursts spread across keys instead of always
+// hammering key #1 first.
+let keyCursor = 0;
+
+/**
+ * POST a generateContent body to Gemini, rotating across ALL configured keys.
+ * Starts at a round-robin offset (spreads load) and, on a 429/500/503, fails
+ * over to the next key. Throws only if EVERY key fails — so one exhausted
+ * free-tier key can't break the feature on its own.
+ */
+async function callGemini(
+  body: Record<string, unknown>
+): Promise<GeminiResponse> {
+  const keys = env.geminiKeys;
+  if (keys.length === 0) requireGeminiKey(); // throws a clear MissingCredentialError
+  const n = keys.length;
+  const start = keyCursor++ % n;
+  let lastError = "";
+  for (let i = 0; i < n; i++) {
+    const key = keys[(start + i) % n];
+    const url = `${GEMINI_BASE}/models/${env.geminiModel}:generateContent?key=${encodeURIComponent(
+      key
+    )}`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      continue; // network blip — try the next key
+    }
+    if (res.ok) return (await res.json()) as GeminiResponse;
+    const text = await res.text().catch(() => "");
+    lastError = `Gemini API error ${res.status}: ${text.slice(0, 300) || res.statusText}`;
+    // Rotate only on quota/rate/transient errors; a 400/404 won't fix itself.
+    if (res.status === 429 || res.status === 500 || res.status === 503) continue;
+    throw new Error(lastError);
+  }
+  throw new Error(lastError || "All Gemini keys exhausted.");
+}
+
+function extractText(data: GeminiResponse): string {
+  return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ?? "";
+}
+
+/** Low-level: send parts to Gemini generateContent (JSON mode) and return text. */
 async function generate(
   parts: Array<Record<string, unknown>>
 ): Promise<string> {
-  const key = requireGeminiKey();
-  const url = `${GEMINI_BASE}/models/${env.geminiModel}:generateContent?key=${encodeURIComponent(
-    key
-  )}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts }],
-      generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
-    }),
-    cache: "no-store",
+  const data = await callGemini({
+    contents: [{ role: "user", parts }],
+    generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `Gemini API error ${res.status}: ${body.slice(0, 400) || res.statusText}`
-    );
-  }
-
-  const data = (await res.json()) as GeminiResponse;
-  return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ?? "";
+  return extractText(data);
 }
 
 /** Text-only generation (JSON) — used as an LLM fallback when Groq is down. */
@@ -93,28 +123,12 @@ export async function geminiText(prompt: string): Promise<string> {
  * to ungrounded generation so the feature degrades gracefully instead of dying.
  */
 export async function geminiGrounded(prompt: string): Promise<string> {
-  const key = requireGeminiKey();
-  const url = `${GEMINI_BASE}/models/${env.geminiModel}:generateContent?key=${encodeURIComponent(
-    key
-  )}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      tools: [{ google_search: {} }],
-      generationConfig: { temperature: 0.4 },
-    }),
-    cache: "no-store",
+  const data = await callGemini({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
+    generationConfig: { temperature: 0.4 },
   });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `Gemini grounding error ${res.status}: ${body.slice(0, 400) || res.statusText}`
-    );
-  }
-  const data = (await res.json()) as GeminiResponse;
-  return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ?? "";
+  return extractText(data);
 }
 
 /** Low-level multimodal generation — pass a mix of {text} and image parts. */
