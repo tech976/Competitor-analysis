@@ -46,27 +46,31 @@ interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
 }
 
+// A known-good, always-current model to fall back to if the configured one is
+// gated (e.g. a version-pinned model like gemini-2.5-flash that's blocked for
+// newer-project keys).
+const FALLBACK_MODEL = "gemini-flash-latest";
+
 // Round-robin cursor so request bursts spread across keys instead of always
 // hammering key #1 first.
 let keyCursor = 0;
+// The last model that actually worked — lets us self-heal past a bad/gated
+// GEMINI_MODEL (e.g. one left set to a deprecated version on the host) with no
+// code or env change needed.
+let activeModel: string | null = null;
 
-/**
- * POST a generateContent body to Gemini, rotating across ALL configured keys.
- * Starts at a round-robin offset (spreads load) and, on a 429/500/503, fails
- * over to the next key. Throws only if EVERY key fails — so one exhausted
- * free-tier key can't break the feature on its own.
- */
-async function callGemini(
+/** Try ONE model across all keys. Distinguishes "switch KEY" from "switch MODEL". */
+async function tryModel(
+  model: string,
   body: Record<string, unknown>
-): Promise<GeminiResponse> {
+): Promise<{ data?: GeminiResponse; retryModel?: boolean; error: string }> {
   const keys = env.geminiKeys;
-  if (keys.length === 0) requireGeminiKey(); // throws a clear MissingCredentialError
   const n = keys.length;
   const start = keyCursor++ % n;
-  let lastError = "";
+  let error = "";
   for (let i = 0; i < n; i++) {
     const key = keys[(start + i) % n];
-    const url = `${GEMINI_BASE}/models/${env.geminiModel}:generateContent?key=${encodeURIComponent(
+    const url = `${GEMINI_BASE}/models/${model}:generateContent?key=${encodeURIComponent(
       key
     )}`;
     let res: Response;
@@ -78,17 +82,50 @@ async function callGemini(
         cache: "no-store",
       });
     } catch (e) {
-      lastError = e instanceof Error ? e.message : String(e);
+      error = e instanceof Error ? e.message : String(e);
       continue; // network blip — try the next key
     }
-    if (res.ok) return (await res.json()) as GeminiResponse;
+    if (res.ok) return { data: (await res.json()) as GeminiResponse, error: "" };
     const text = await res.text().catch(() => "");
-    lastError = `Gemini API error ${res.status}: ${text.slice(0, 300) || res.statusText}`;
-    // Rotate only on quota/rate/transient errors; a 400/404 won't fix itself.
+    error = `Gemini API error ${res.status}: ${text.slice(0, 300) || res.statusText}`;
+    // Model unavailable/gated for this project → switching KEY won't help, but a
+    // different MODEL might.
+    if (res.status === 404 || /no longer available|not supported|update your code/i.test(text)) {
+      return { retryModel: true, error };
+    }
+    // Quota/rate/transient → try the next KEY.
     if (res.status === 429 || res.status === 500 || res.status === 503) continue;
-    throw new Error(lastError);
+    // Genuine bad request → give up.
+    return { error };
   }
-  throw new Error(lastError || "All Gemini keys exhausted.");
+  // Every key hit quota for this model — a different model bucket may still work.
+  return { retryModel: true, error };
+}
+
+/**
+ * POST a generateContent body to Gemini. Rotates across ALL configured keys
+ * (round-robin + 429 failover) and, if the configured model is gated/exhausted,
+ * self-heals to FALLBACK_MODEL. Throws only if every key AND model fails — so
+ * neither one exhausted key nor a stale GEMINI_MODEL can break the feature.
+ */
+async function callGemini(
+  body: Record<string, unknown>
+): Promise<GeminiResponse> {
+  if (env.geminiKeys.length === 0) requireGeminiKey(); // throws a clear error
+  const configured = activeModel ?? env.geminiModel;
+  const models =
+    configured === FALLBACK_MODEL ? [configured] : [configured, FALLBACK_MODEL];
+  let lastError = "";
+  for (const model of models) {
+    const r = await tryModel(model, body);
+    if (r.data) {
+      activeModel = model; // remember what worked (skip the gated model next time)
+      return r.data;
+    }
+    lastError = r.error;
+    if (!r.retryModel) break; // hard request error — other models won't help
+  }
+  throw new Error(lastError || "All Gemini keys/models exhausted.");
 }
 
 function extractText(data: GeminiResponse): string {

@@ -28,6 +28,35 @@ function stripFences(raw: string): string {
 }
 
 /**
+ * Parse model JSON tolerantly. LLMs (especially at higher temperature) sometimes
+ * wrap the JSON in prose or add a trailing note, which trips strict JSON.parse.
+ * Fall back to extracting the outermost {...} / [...] block before giving up.
+ */
+export function parseLenientJson<T = unknown>(raw: string): T {
+  const cleaned = stripFences(raw);
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    const firstObj = cleaned.indexOf("{");
+    const firstArr = cleaned.indexOf("[");
+    let start: number;
+    let close: string;
+    if (firstArr !== -1 && (firstObj === -1 || firstArr < firstObj)) {
+      start = firstArr;
+      close = "]";
+    } else {
+      start = firstObj;
+      close = "}";
+    }
+    const end = cleaned.lastIndexOf(close);
+    if (start === -1 || end === -1 || end < start) {
+      throw new Error("Model did not return valid JSON.");
+    }
+    return JSON.parse(cleaned.slice(start, end + 1)) as T;
+  }
+}
+
+/**
  * Ask the configured LLM for JSON and parse it. Tries each configured provider
  * in turn; returns the first success, throws the last error if all fail.
  */
@@ -50,13 +79,13 @@ export async function completeJson<T = unknown>(
         ],
         { maxTokens: opts.maxTokens, json: true, temperature: opts.temperature }
       );
-      return JSON.parse(stripFences(raw)) as T;
+      return parseLenientJson<T>(raw);
     });
   }
   if (integrations.gemini) {
     attempts.push(async () => {
       const raw = await geminiText(`${system}\n\n${prompt}`, opts.temperature);
-      return JSON.parse(stripFences(raw)) as T;
+      return parseLenientJson<T>(raw);
     });
   }
   if (integrations.anthropic) {

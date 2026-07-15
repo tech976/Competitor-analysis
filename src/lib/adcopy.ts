@@ -213,10 +213,22 @@ export async function generateAdCopy(
     }
 
     // 4. Generate the headlines + concepts.
-    const generated = await completeJson<Omit<AdCopyOutput, "competitorIntel">>(
-      headlinePrompt(clientDossier, competitorIntel, opts.goal ?? null),
-      { maxTokens: 4000, temperature: 0.9 } // hotter = punchier, more varied copy
-    );
+    const hlPrompt = headlinePrompt(clientDossier, competitorIntel, opts.goal ?? null);
+    let generated: Omit<AdCopyOutput, "competitorIntel">;
+    try {
+      // Hot first pass — punchier, more varied copy.
+      generated = await completeJson<Omit<AdCopyOutput, "competitorIntel">>(hlPrompt, {
+        maxTokens: 4000,
+        temperature: 0.85,
+      });
+    } catch {
+      // A high temperature occasionally breaks JSON validity on long outputs —
+      // retry cooler for a reliable parse (copy is still strong).
+      generated = await completeJson<Omit<AdCopyOutput, "competitorIntel">>(hlPrompt, {
+        maxTokens: 4000,
+        temperature: 0.4,
+      });
+    }
 
     const output: AdCopyOutput = {
       strategy: generated.strategy ?? {
