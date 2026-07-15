@@ -85,7 +85,7 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="mb-1 inline-flex items-center gap-2 text-sm font-semibold text-white/90">
+      <h2 className="mb-1 inline-flex items-center gap-2 text-sm font-semibold text-fg/90">
         <Icon className="h-4 w-4 text-accent-soft" /> {title}
         <span className="text-xs font-normal text-muted">({ads.length})</span>
       </h2>
@@ -136,7 +136,7 @@ function Section({
                   )
                 )}
                 {a.adLibraryUrl && (
-                  <a href={a.adLibraryUrl} target="_blank" rel="noreferrer" className="text-muted hover:text-white">
+                  <a href={a.adLibraryUrl} target="_blank" rel="noreferrer" className="text-muted hover:text-fg">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 )}

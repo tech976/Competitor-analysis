@@ -169,7 +169,7 @@ export default function AdCopyPage() {
           <button
             onClick={generate}
             disabled={!clientId || busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-glow transition enabled:hover:brightness-110 disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-fg shadow-glow transition enabled:hover:brightness-110 disabled:opacity-40"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,7 +185,7 @@ export default function AdCopyPage() {
       {busy && (
         <FadeIn className="glass-2 mb-6 flex items-center gap-3 px-5 py-4">
           <Loader2 className="h-4 w-4 animate-spin text-accent-soft" />
-          <p className="text-sm text-white/90">{STEPS[step]}</p>
+          <p className="text-sm text-fg/90">{STEPS[step]}</p>
         </FadeIn>
       )}
 
@@ -275,10 +275,10 @@ function Results({ result }: { result: AdCopyResultLite }) {
         <h2 className="mb-2 inline-flex items-center gap-2 text-sm font-semibold">
           <Lightbulb className="h-4 w-4 text-accent-soft" /> Creative strategy
         </h2>
-        <p className="text-sm text-white/90">{output.strategy.summary}</p>
+        <p className="text-sm text-fg/90">{output.strategy.summary}</p>
         {output.strategy.positioningVsCompetitors && (
           <p className="mt-2 text-sm text-muted">
-            <span className="font-medium text-white/80">Positioning:</span>{" "}
+            <span className="font-medium text-fg/80">Positioning:</span>{" "}
             {output.strategy.positioningVsCompetitors}
           </p>
         )}
@@ -354,7 +354,7 @@ function ClientDossierCard({ dossier }: { dossier: ClientDossierLite }) {
     val ? (
       <div>
         <span className="text-xs font-medium text-muted">{label}</span>
-        <p className="text-sm text-white/90">{val}</p>
+        <p className="text-sm text-fg/90">{val}</p>
       </div>
     ) : null;
   return (
@@ -375,7 +375,7 @@ function ClientDossierCard({ dossier }: { dossier: ClientDossierLite }) {
           <span className="text-xs font-medium text-muted">Proof points</span>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {dossier.proofPoints.map((p, i) => (
-              <span key={i} className="rounded-full bg-surface-2/60 px-2.5 py-1 text-xs text-white/80">
+              <span key={i} className="rounded-full bg-surface-2/60 px-2.5 py-1 text-xs text-fg/80">
                 {p}
               </span>
             ))}
@@ -390,7 +390,7 @@ function HeadlineGroupCard({ group, delay }: { group: HeadlineGroupLite; delay: 
   return (
     <FadeIn delay={delay} className="glass p-5">
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-white">{group.angle}</h3>
+        <h3 className="text-sm font-semibold text-fg">{group.angle}</h3>
         {group.intent && <p className="text-xs text-muted">{group.intent}</p>}
       </div>
       <div className="space-y-1.5">
@@ -418,7 +418,7 @@ function HeadlineRow({ text, rationale }: { text: string; rationale: string }) {
         {copied ? <Check className="h-3.5 w-3.5 text-lead" /> : <Copy className="h-3.5 w-3.5" />}
       </button>
       <div className="min-w-0">
-        <p className="text-sm text-white/95">{text}</p>
+        <p className="text-sm text-fg/95">{text}</p>
         {rationale && <p className="text-[11px] text-muted">{rationale}</p>}
       </div>
     </div>
@@ -446,8 +446,8 @@ function ConceptCard({ concept, delay }: { concept: AdConceptLite; delay: number
           {copied ? <Check className="h-4 w-4 text-lead" /> : <Copy className="h-4 w-4" />}
         </button>
       </div>
-      <p className="text-sm font-semibold text-white">{concept.headline}</p>
-      <p className="mt-1.5 flex-1 text-xs text-white/80">{concept.primaryText}</p>
+      <p className="text-sm font-semibold text-fg">{concept.headline}</p>
+      <p className="mt-1.5 flex-1 text-xs text-fg/80">{concept.primaryText}</p>
       <p className="mt-2 text-xs font-medium text-accent-soft">{concept.cta}</p>
       {concept.whyItBeatsCompetitors && (
         <p className="mt-2 border-t border-border pt-2 text-[11px] text-muted">
@@ -475,13 +475,13 @@ function CompetitorCard({ intel, delay }: { intel: CompetitorIntelLite; delay: n
   return (
     <FadeIn delay={delay} className="glass-2 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">{intel.name}</h3>
+        <h3 className="text-sm font-semibold text-fg">{intel.name}</h3>
         <span className="text-[10px] text-muted">
           {intel.priceTier} · close {intel.closeness}/10
         </span>
       </div>
-      {intel.positioning && <p className="mt-1 text-xs text-white/80">{intel.positioning}</p>}
-      {chips("Angles", intel.angles, "bg-surface-2/60 text-white/80")}
+      {intel.positioning && <p className="mt-1 text-xs text-fg/80">{intel.positioning}</p>}
+      {chips("Angles", intel.angles, "bg-surface-2/60 text-fg/80")}
       {chips("Hooks", intel.hooks, "bg-accent/10 text-accent-soft")}
       {chips("Offers", intel.offers, "bg-lead/10 text-lead")}
       {chips("Weaknesses to exploit", intel.weaknesses, "bg-behind/10 text-behind")}

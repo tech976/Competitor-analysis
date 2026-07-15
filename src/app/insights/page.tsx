@@ -82,7 +82,7 @@ export default function InsightsPage() {
                   const max = data.stats.topBehind[0].count || 1;
                   return (
                     <div key={t.label} className="flex items-center gap-3">
-                      <span className="w-32 shrink-0 text-xs text-white/80">{t.label}</span>
+                      <span className="w-32 shrink-0 text-xs text-fg/80">{t.label}</span>
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-canvas">
                         <div className="h-full rounded-full bg-behind" style={{ width: `${(t.count / max) * 100}%` }} />
                       </div>
@@ -131,7 +131,7 @@ function Panel({
       {!items?.length ? (
         <p className="text-xs text-muted">—</p>
       ) : (
-        <ol className={cn("space-y-1.5 text-sm text-white/80", numbered ? "list-decimal pl-5" : "list-none")}>
+        <ol className={cn("space-y-1.5 text-sm text-fg/80", numbered ? "list-decimal pl-5" : "list-none")}>
           {items.map((it, i) => (
             <li key={i} className={numbered ? "" : "flex gap-2"}>
               {!numbered && <span className={toneCls}>•</span>}

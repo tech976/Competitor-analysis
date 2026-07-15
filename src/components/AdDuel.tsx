@@ -116,7 +116,7 @@ function AdHeadCard({
           <span
             className={cn(
               "text-3xl font-semibold tabular-nums",
-              win ? "text-lead" : "text-white/90"
+              win ? "text-lead" : "text-fg/90"
             )}
           >
             <CountUp value={overall} />
@@ -154,7 +154,7 @@ function ScoreRow({
   return (
     <div>
       <div className="flex items-center gap-3">
-        <span className="w-28 shrink-0 text-xs text-white/80">{label}</span>
+        <span className="w-28 shrink-0 text-xs text-fg/80">{label}</span>
         <Bar value={you} tone="client" />
         <span className="w-9 text-right text-xs tabular-nums text-accent-soft">{you}</span>
         <span className="w-9 text-right text-xs tabular-nums text-fuchsia-300">{rival}</span>
@@ -219,7 +219,7 @@ function InsightPanel({
       {items.length === 0 ? (
         <p className="text-xs text-muted">—</p>
       ) : (
-        <ol className={cn("space-y-1.5 text-sm text-white/80", numbered ? "list-decimal pl-5" : "list-none")}>
+        <ol className={cn("space-y-1.5 text-sm text-fg/80", numbered ? "list-decimal pl-5" : "list-none")}>
           {items.map((it, i) => (
             <li key={i} className={numbered ? "" : "flex gap-2"}>
               {!numbered && <span className={tone === "lead" ? "text-lead" : "text-behind"}>•</span>}

@@ -50,7 +50,7 @@ export default function ComparisonView({ c }: { c: ComparisonLite }) {
       {/* Competitor 1–10 ratings */}
       {c.competitors.length > 0 && (
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-white/90">Competitor ratings</h3>
+          <h3 className="mb-3 text-sm font-semibold text-fg/90">Competitor ratings</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {c.competitors.map((a, i) => (
               <FadeIn key={a.id} delay={i * 0.05}>
@@ -64,7 +64,7 @@ export default function ComparisonView({ c }: { c: ComparisonLite }) {
       {/* Per-aspect comparison cards */}
       {dims.length > 0 && (
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-white/90">
+          <h3 className="mb-3 text-sm font-semibold text-fg/90">
             Aspect-by-aspect comparison
           </h3>
           <div className="space-y-3">

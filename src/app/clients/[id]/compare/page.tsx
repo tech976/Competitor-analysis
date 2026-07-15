@@ -85,7 +85,7 @@ export default function ComparePage() {
       <div className="mb-5 flex items-center justify-between">
         <Link
           href={`/clients/${id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-white"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"
         >
           <ArrowLeft className="h-4 w-4" /> {client?.client.name ?? "Client"}
         </Link>
@@ -174,7 +174,7 @@ export default function ComparePage() {
 
       {!busy && !result && (
         <p className="glass px-6 py-12 text-center text-sm text-muted">
-          Pick your ad and competitor ads, then hit <span className="text-white">Compare</span>.
+          Pick your ad and competitor ads, then hit <span className="text-fg">Compare</span>.
         </p>
       )}
     </div>

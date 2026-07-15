@@ -36,7 +36,7 @@ export default function ClientCard({ client }: { client: ClientListItem }) {
           )}
         </div>
 
-        <div className="mt-5 flex items-center gap-4 text-sm text-white/80">
+        <div className="mt-5 flex items-center gap-4 text-sm text-fg/80">
           <span className="inline-flex items-center gap-1.5">
             <Swords className="h-4 w-4 text-accent-soft" />
             {client._count.competitors} rivals

@@ -63,7 +63,7 @@ export default function ReportsPage() {
           {report?.comparison && (
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-fg shadow-glow transition hover:brightness-110"
             >
               <Printer className="h-4 w-4" /> Print / PDF
             </button>
@@ -142,7 +142,7 @@ function Kpi({
       <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
         <Icon className="h-3.5 w-3.5" /> {label}
       </p>
-      <p className="mt-0.5 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-0.5 text-lg font-semibold text-fg">{value}</p>
     </div>
   );
 }

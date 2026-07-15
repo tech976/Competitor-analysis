@@ -1,28 +1,31 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Elegant, clean dark theme for AdGapIQ.
- * Palette: deep slate canvas, a refined indigo/violet accent, and a small set
- * of semantic colors for the comparison marks (lead/par/behind).
+ * AdGapIQ palette — now theme-aware. Colors resolve to CSS variables (RGB
+ * triplets) defined per theme in globals.css, so light/dark swap instantly and
+ * Tailwind opacity modifiers (e.g. text-fg/70) still work via <alpha-value>.
  */
+const v = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        canvas: "#0a0a0f", // app background
-        surface: "#12121a", // cards
-        "surface-2": "#1a1a24", // raised cards / hovers
-        border: "#23232f",
+        canvas: v("canvas"), // app background
+        surface: v("surface"), // cards
+        "surface-2": v("surface-2"), // raised cards / hovers
+        border: v("border"),
+        fg: v("fg"), // primary foreground/text (was hard-coded white)
         accent: {
-          DEFAULT: "#7c5cff", // violet
-          soft: "#9d86ff",
-          glow: "#6d4bff",
+          DEFAULT: v("accent"), // violet
+          soft: v("accent-soft"),
+          glow: v("accent-glow"),
         },
-        lead: "#34d399", // ✅ ahead (emerald)
-        par: "#fbbf24", // ➖ on par (amber)
-        behind: "#fb7185", // ❌ behind (rose)
-        muted: "#8b8b9a",
+        lead: v("lead"), // ✅ ahead (emerald)
+        par: v("par"), // ➖ on par (amber)
+        behind: v("behind"), // ❌ behind (rose)
+        muted: v("muted"),
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

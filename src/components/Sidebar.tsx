@@ -17,7 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { GradientText } from "@/components/ui/GradientText";
-import IntegrationStatus from "@/components/IntegrationStatus";
+import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/cn";
 
 const NAV = [
@@ -58,8 +58,8 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
                 active
-                  ? "bg-accent/15 text-white shadow-glow"
-                  : "text-muted hover:bg-surface-2/60 hover:text-white/90"
+                  ? "bg-accent/15 text-fg shadow-glow"
+                  : "text-muted hover:bg-surface-2/60 hover:text-fg/90"
               )}
             >
               <Icon className="h-[18px] w-[18px]" />
@@ -70,7 +70,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto space-y-3">
-        <IntegrationStatus />
+        <ThemeToggle />
         <CreditsWidget />
       </div>
     </aside>

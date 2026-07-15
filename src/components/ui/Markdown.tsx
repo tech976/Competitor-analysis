@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 function inline(text: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
     p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i} className="font-semibold text-white">
+      <strong key={i} className="font-semibold text-fg">
         {p.slice(2, -2)}
       </strong>
     ) : (
@@ -62,7 +62,7 @@ export default function Markdown({
     if (/^#{1,6}\s/.test(line)) {
       flush();
       blocks.push(
-        <h4 key={key++} className="mt-2 text-sm font-semibold text-white">
+        <h4 key={key++} className="mt-2 text-sm font-semibold text-fg">
           {inline(line.replace(/^#{1,6}\s/, ""))}
         </h4>
       );
@@ -92,7 +92,7 @@ export default function Markdown({
   flush();
 
   return (
-    <div className={cn("space-y-2.5 text-sm leading-relaxed text-white/80", className)}>
+    <div className={cn("space-y-2.5 text-sm leading-relaxed text-fg/80", className)}>
       {blocks}
     </div>
   );

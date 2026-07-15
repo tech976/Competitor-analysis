@@ -9,8 +9,8 @@ export default function AuroraBackground() {
       <div className="absolute -left-40 -top-40 h-[40rem] w-[40rem] animate-aurora-drift rounded-full bg-accent/20 blur-[120px]" />
       <div className="absolute -right-40 top-20 h-[34rem] w-[34rem] animate-aurora-drift rounded-full bg-fuchsia-500/10 blur-[120px] [animation-delay:-6s]" />
       <div className="absolute bottom-[-15rem] left-1/3 h-[34rem] w-[34rem] animate-aurora-drift rounded-full bg-indigo-500/10 blur-[120px] [animation-delay:-12s]" />
-      {/* fine grid texture */}
-      <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:48px_48px]" />
+      {/* fine grid texture — uses the foreground colour so it shows in both themes */}
+      <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(rgb(var(--fg))_1px,transparent_1px),linear-gradient(90deg,rgb(var(--fg))_1px,transparent_1px)] [background-size:48px_48px]" />
     </div>
   );
 }

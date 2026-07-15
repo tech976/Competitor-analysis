@@ -71,7 +71,7 @@ export default function ClientDetailPage() {
     <div className="mx-auto max-w-5xl">
       <Link
         href="/"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-white"
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"
       >
         <ArrowLeft className="h-4 w-4" /> Clients
       </Link>
@@ -184,7 +184,7 @@ export default function ClientDetailPage() {
           <Megaphone className="mb-3 h-8 w-8 text-accent-soft" />
           <p className="text-base font-medium">No comparison yet</p>
           <p className="mt-1 max-w-md text-sm text-muted">
-            Add competitors and hit <span className="text-white">Run scan</span> to pull their
+            Add competitors and hit <span className="text-fg">Run scan</span> to pull their
             Meta ads, find their winners, and generate your marketing-angle gap analysis.
           </p>
         </FadeIn>
@@ -225,7 +225,7 @@ function AdGallery({
 }) {
   return (
     <section className="mt-10">
-      <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-white/90">
+      <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-fg/90">
         {icon} {title}
         <span className="text-xs font-normal text-muted">({ads.length})</span>
       </h3>

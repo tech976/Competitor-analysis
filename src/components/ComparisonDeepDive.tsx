@@ -37,7 +37,7 @@ export default function ComparisonDeepDive({
           1-to-1 Deep Dive
         </h2>
         <p className="mb-3 text-sm text-muted">
-          Your ad vs <span className="text-white">{insights.vsName}</span> — your toughest competitor here.
+          Your ad vs <span className="text-fg">{insights.vsName}</span> — your toughest competitor here.
         </p>
         {(yourLink || rivalLink) && (
           <div className="mb-4 flex flex-wrap gap-4 text-xs">
@@ -80,7 +80,7 @@ export default function ComparisonDeepDive({
 function inlineBold(text: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
     p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i} className="font-semibold text-white">
+      <strong key={i} className="font-semibold text-fg">
         {p.slice(2, -2)}
       </strong>
     ) : (
@@ -115,7 +115,7 @@ function Panel({
       {items.length === 0 ? (
         <p className="text-xs text-muted">—</p>
       ) : (
-        <ol className={cn("space-y-1.5 text-sm text-white/80", numbered ? "list-decimal pl-5" : "list-none")}>
+        <ol className={cn("space-y-1.5 text-sm text-fg/80", numbered ? "list-decimal pl-5" : "list-none")}>
           {items.map((it, i) => (
             <li key={i} className={numbered ? "" : "flex gap-2"}>
               {!numbered && <span className={tone === "lead" ? "text-lead" : "text-behind"}>•</span>}

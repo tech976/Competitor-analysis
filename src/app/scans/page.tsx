@@ -48,7 +48,7 @@ export default function ScansPage() {
         <div className="glass h-64 animate-pulse" />
       ) : scans.length === 0 ? (
         <p className="glass px-6 py-16 text-center text-sm text-muted">
-          No scans yet — open a client and hit <span className="text-white">Run scan</span>.
+          No scans yet — open a client and hit <span className="text-fg">Run scan</span>.
         </p>
       ) : (
         <FadeIn delay={0.05} className="glass overflow-x-auto p-1.5">

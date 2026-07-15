@@ -99,7 +99,7 @@ export default function ComparisonColumns({
                 {isVideo && (
                   <span className="absolute inset-0 grid place-items-center">
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-black/55">
-                      <Play className="h-4 w-4 fill-white text-white" />
+                      <Play className="h-4 w-4 fill-fg text-fg" />
                     </span>
                   </span>
                 )}

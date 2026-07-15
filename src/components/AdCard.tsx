@@ -28,7 +28,7 @@ export default function AdCard({ ad }: { ad: AdLite }) {
         {isVideo && (
           <span className="absolute inset-0 grid place-items-center">
             <span className="grid h-11 w-11 place-items-center rounded-full bg-black/55 backdrop-blur">
-              <Play className="h-5 w-5 fill-white text-white" />
+              <Play className="h-5 w-5 fill-fg text-fg" />
             </span>
           </span>
         )}
@@ -82,7 +82,7 @@ export default function AdCard({ ad }: { ad: AdLite }) {
             href={ad.adLibraryUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-white"
+            className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-fg"
           >
             Ad Library <ExternalLink className="h-3 w-3" />
           </a>

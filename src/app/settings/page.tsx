@@ -55,7 +55,7 @@ export default function SettingsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted">
           System status and configuration. Keys &amp; tuning are set via environment
-          variables (<code className="text-white/70">.env</code> locally, Vercel in
+          variables (<code className="text-fg/70">.env</code> locally, Vercel in
           production).
         </p>
       </FadeIn>
@@ -144,7 +144,7 @@ function StatusRow({ label, on }: { label: string; on: boolean }) {
       >
         {on ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
       </span>
-      <span className="text-sm text-white/85">{label}</span>
+      <span className="text-sm text-fg/85">{label}</span>
       <span className={cn("ml-auto text-[10px]", on ? "text-lead" : "text-muted")}>
         {on ? "ready" : "off"}
       </span>
@@ -166,7 +166,7 @@ function Stat({
   return (
     <div className="glass-2 px-3 py-3">
       <p className="text-[11px] font-medium text-muted">{label}</p>
-      <p className={cn("mt-0.5 text-sm font-semibold", highlight ? "text-accent-soft capitalize" : "text-white")}>
+      <p className={cn("mt-0.5 text-sm font-semibold", highlight ? "text-accent-soft capitalize" : "text-fg")}>
         {value}
       </p>
       {hint && <p className="text-[10px] text-muted">{hint}</p>}
