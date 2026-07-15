@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { metaAdUrl } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,12 @@ export async function GET() {
     winningScore: a.winningScore,
     isProvenWinner: a.isProvenWinner,
     imageUrl: a.imageUrl,
-    adLibraryUrl: a.adLibraryUrl,
+    // Build the deep-link fresh from the archive id (canonical, and fixes any
+    // older stored URL). Opens exactly this ad on Meta.
+    adLibraryUrl: metaAdUrl(a.adArchiveId),
+    // False = this competitor has no FB Page set, so it was matched by keyword —
+    // the ad may belong to a different page. UI flags it.
+    verifiedPage: Boolean(a.advertiserPageId),
     firstSeenAt: a.firstSeenAt,
   });
 

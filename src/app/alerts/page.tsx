@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import Link from "next/link";
-import { Bell, Sparkle, TrendingUp, Clock, ExternalLink, Trophy } from "lucide-react";
+import { Bell, Sparkle, TrendingUp, Clock, ExternalLink, Trophy, AlertTriangle } from "lucide-react";
 import { FadeIn } from "@/components/ui/motion";
 import { GradientText } from "@/components/ui/GradientText";
 import { proxied } from "@/lib/client";
@@ -20,6 +20,7 @@ interface AlertAd {
   isProvenWinner: boolean;
   imageUrl: string | null;
   adLibraryUrl: string | null;
+  verifiedPage?: boolean;
   firstSeenAt: string;
   scoreDelta?: number;
   deployDelta?: number;
@@ -106,6 +107,14 @@ function Section({
                   <p className="truncate text-sm font-medium">
                     {a.advertiserPageName ?? a.advertiserName}
                     {a.isProvenWinner && <Trophy className="ml-1.5 inline h-3 w-3 text-amber-300" />}
+                    {a.verifiedPage === false && (
+                      <span
+                        className="ml-1.5 inline-flex align-middle"
+                        title="No FB Page set for this competitor — matched by name, so this ad may belong to another page. Set its page (Discover on the client) and re-scan to fix."
+                      >
+                        <AlertTriangle className="h-3 w-3 text-amber-400/80" />
+                      </span>
+                    )}
                   </p>
                   <p className="truncate text-[11px] text-muted">
                     for <Link href={`/clients/${a.clientId}`} className="text-accent-soft hover:underline">{a.clientName}</Link>

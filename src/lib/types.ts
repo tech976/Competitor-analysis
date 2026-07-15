@@ -9,6 +9,18 @@ export type MediaType = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" | "UNKNOWN";
 
 export type AdvertiserType = "CLIENT" | "COMPETITOR";
 
+/**
+ * Canonical Meta Ad Library deep-link for a single ad. This is the exact format
+ * Meta itself uses for "See ad details", so it opens THAT ad. Always build links
+ * from the string archive id (never a JS number — ids can exceed 2^53 and lose
+ * precision, which would land on a different ad).
+ */
+export function metaAdUrl(adArchiveId: string): string {
+  return `https://www.facebook.com/ads/library/?id=${encodeURIComponent(
+    String(adArchiveId)
+  )}`;
+}
+
 /** One ad as we store it, regardless of which actor produced it. */
 export interface NormalizedAd {
   /** Meta ad archive id — dedup key. */

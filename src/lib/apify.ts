@@ -13,7 +13,7 @@
  *     videoPreviewImageUrl) and/or snapshot.images[]/videos[].
  */
 import { requireApifyToken, env } from "./env";
-import { mapMediaType, type AdScrapeResult, type MediaType, type NormalizedAd } from "./types";
+import { mapMediaType, metaAdUrl, type AdScrapeResult, type MediaType, type NormalizedAd } from "./types";
 
 const APIFY_BASE = "https://api.apify.com/v2";
 
@@ -140,7 +140,7 @@ function toNormalizedAd(item: ApifyAdItem): NormalizedAd | null {
 
   return {
     adArchiveId: String(adArchiveId),
-    adLibraryUrl: `https://www.facebook.com/ads/library/?id=${adArchiveId}`,
+    adLibraryUrl: metaAdUrl(String(adArchiveId)),
     pageId: item.pageId ?? item.pageID ?? null,
     pageName: item.pageName ?? null,
     mediaType,
