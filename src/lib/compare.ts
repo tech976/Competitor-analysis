@@ -75,8 +75,13 @@ export async function buildComparison(scanRunId: string): Promise<string | null>
       industry: ctx?.industry ?? null,
       audience: ctx?.targetAudience ?? null,
       usp: ctx?.usp ?? null,
+      products: ctx?.products ?? null,
+      positioning: ctx?.positioning ?? null,
       brandVoice: ctx?.brandVoice ?? null,
       goals: ctx?.goals ?? null,
+      // Deep-research brief (from the Ad Copy Studio), when available — makes the
+      // whole comparison brand-aware instead of generic.
+      brief: ctx?.brandBrief ?? null,
     },
     clientAds: clientAds.map((a) => ({
       format: a.mediaType,
@@ -98,7 +103,14 @@ export async function buildComparison(scanRunId: string): Promise<string | null>
     })),
   };
 
-  const prompt = `Compare this client's Meta ads against their competitors' PROVEN WINNERS (long-running / scaled ads). Output strictly in marketing terms and tie everything back to driving SALES.
+  const prompt = `You are the sharpest competitive-advertising analyst in the industry — the analyst other agencies wish they had. Compare this client's Meta ads against their competitors' PROVEN WINNERS (long-running / scaled ads, which win because the advertiser keeps paying to run them).
+
+How to analyse (do this rigorously):
+- GROUND every claim in the actual data below. When you cite a strength or gap, tie it to specific competitor winners (their headline/copy/format/days-live), not vibes.
+- A competitor ad running 90+ days or scaled across many creatives is a PROVEN performer — treat its angle/offer/format as validated demand, and judge whether the client is matching it.
+- Read the client's brief/USP and keep recommendations ON-BRAND and realistic — never suggest claims the brand can't make.
+- Be decisive: say exactly where the client leads, is at par, and is behind, and give fixes a creative team can ship THIS WEEK. No generic filler.
+Output strictly in marketing terms and tie everything back to driving SALES.
 
 Return JSON with this exact shape:
 {

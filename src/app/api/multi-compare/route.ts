@@ -81,7 +81,12 @@ export async function POST(req: Request) {
     const result = await compareAdColumns(
       toInput(clientAd),
       competitorAds.map(toInput),
-      { industry: context?.industry, audience: context?.targetAudience, brandVoice: context?.brandVoice }
+      {
+        industry: context?.industry,
+        audience: context?.targetAudience,
+        brandVoice: context?.brandVoice,
+        brief: context?.brandBrief,
+      }
     );
     return NextResponse.json({ result });
   } catch (err) {

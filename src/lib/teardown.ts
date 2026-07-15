@@ -131,15 +131,21 @@ interface AIInsights {
 export async function compareAdColumns(
   clientAd: DuelAdInput,
   competitorAds: DuelAdInput[],
-  context: { industry?: string | null; audience?: string | null; brandVoice?: string | null } = {}
+  context: {
+    industry?: string | null;
+    audience?: string | null;
+    brandVoice?: string | null;
+    brief?: string | null;
+  } = {}
 ): Promise<ColumnsResult | null> {
   if (!llmConfigured()) return null;
 
   const ads = [clientAd, ...competitorAds];
   const scaleNote = `Scoring scale — calibrate CONSISTENTLY across all ads: 0-2 absent/poor · 3-4 weak · 5-6 average · 7-8 strong · 9-10 exceptional. Base EVERY score on the media you are ACTUALLY given plus the ad copy — never on assumptions. If an ad is labelled FULL VIDEO, judge hook/pacing/voiceover/music from what you watch and hear. If it is a STILL FRAME of a video ad, or a static image, you see only ONE image — do NOT invent audio, motion or voiceover; set "na": true for Script/Voiceover unless the on-screen text clearly conveys the message. N/A aspects are excluded from the overall score.`;
 
-  const intro = `You are a senior performance-marketing analyst scoring Meta ads. Ad index 0 is OUR client's ad; the rest are competitors.
-CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}
+  const brief = context.brief ? `\nCLIENT BRIEF: ${context.brief}` : "";
+  const intro = `You are a world-class competitive-advertising analyst judging Meta ads head-to-head — the analyst top DTC brands hire. Ad index 0 is OUR client's ad; the rest are direct competitors. Score like a ruthless expert: reward only genuine craft, penalise weak/generic execution, and stay CONSISTENT so the columns are truly comparable. Every note must point at something concrete in the creative or copy.
+CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}${brief}
 Score each ad 0-10 on: ${COMPARE_ASPECTS.map((a) => `${a.label} (${a.desc})`).join("; ")}.
 ${scaleNote}`;
 
@@ -350,7 +356,12 @@ function sideScores(s: AISide): Record<DimKey, number> {
 export async function compareTwoAds(
   clientAd: DuelAdInput,
   competitorAd: DuelAdInput,
-  context: { industry?: string | null; audience?: string | null; brandVoice?: string | null } = {}
+  context: {
+    industry?: string | null;
+    audience?: string | null;
+    brandVoice?: string | null;
+    brief?: string | null;
+  } = {}
 ): Promise<DuelResult | null> {
   if (!llmConfigured()) return null;
 
@@ -363,9 +374,10 @@ export async function compareTwoAds(
     cta: a.ctaText,
   });
 
-  const prompt = `Do a 1-to-1 head-to-head between OUR CLIENT's ad and a COMPETITOR's ad. Score each ad 0-10 on every dimension and tell us, in marketing terms, exactly what the client is doing wrong and how to fix it.
+  const brief = context.brief ? `\nCLIENT BRIEF: ${context.brief}` : "";
+  const prompt = `You are a world-class competitive-advertising analyst. Do a rigorous 1-to-1 head-to-head between OUR CLIENT's ad and a COMPETITOR's ad. Score each ad 0-10 on every dimension, ground each score in the actual copy/creative, and tell us — in marketing terms — exactly what the client is doing wrong and how to fix it. If the competitor's ad has been live a long time, treat its angle as validated and judge whether the client matches it.
 
-CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}
+CLIENT BRAND: industry=${context.industry ?? "?"}, audience=${context.audience ?? "?"}, voice=${context.brandVoice ?? "?"}${brief}
 
 CLIENT AD: ${JSON.stringify(fmtAd(clientAd))}
 COMPETITOR AD: ${JSON.stringify(fmtAd(competitorAd))}

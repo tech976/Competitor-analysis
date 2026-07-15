@@ -157,6 +157,95 @@ export interface ColumnsResult {
   insights: ColumnsInsights | null;
 }
 
+// ── Ad Copy Studio ───────────────────────────────────────────────────────────
+
+export interface ClientDossierLite {
+  brand: string;
+  oneLiner: string;
+  usp: string;
+  offerings: string[];
+  audience: string;
+  positioning: string;
+  priceTier: string;
+  tone: string;
+  proofPoints: string[];
+  differentiators: string[];
+  keyMessages: string[];
+  objections: string[];
+  industry: string;
+  geography: string;
+  sources: string[];
+}
+
+export interface CompetitorIntelLite {
+  name: string;
+  closeness: number;
+  positioning: string;
+  priceTier: string;
+  tone: string;
+  angles: string[];
+  hooks: string[];
+  offers: string[];
+  weaknesses: string[];
+}
+
+export interface HeadlineGroupLite {
+  angle: string;
+  intent: string;
+  headlines: Array<{ text: string; rationale: string }>;
+}
+
+export interface AdConceptLite {
+  name: string;
+  angle: string;
+  headline: string;
+  primaryText: string;
+  cta: string;
+  whyItBeatsCompetitors: string;
+}
+
+export interface AdCopyOutputLite {
+  strategy: {
+    summary: string;
+    positioningVsCompetitors: string;
+    whitespace: string[];
+  };
+  competitorIntel: CompetitorIntelLite[];
+  headlineGroups: HeadlineGroupLite[];
+  concepts: AdConceptLite[];
+}
+
+export interface AdCopyResultLite {
+  runId: string;
+  clientDossier: ClientDossierLite;
+  output: AdCopyOutputLite;
+}
+
+export interface AdCopyRunSummary {
+  id: string;
+  status: "RUNNING" | "SUCCEEDED" | "FAILED";
+  goal: string | null;
+  website: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  headlineCount: number;
+  error: string | null;
+}
+
+/** A persisted run row as returned by GET ?runId= / the `latest` field. */
+export interface AdCopyRunFull {
+  id: string;
+  clientId: string;
+  status: "RUNNING" | "SUCCEEDED" | "FAILED";
+  website: string | null;
+  goal: string | null;
+  clientDossier: ClientDossierLite | null;
+  output: AdCopyOutputLite | null;
+  createdAt: string;
+  finishedAt: string | null;
+  error: string | null;
+}
+
 export interface AdLite {
   id: string;
   advertiserType: "CLIENT" | "COMPETITOR";

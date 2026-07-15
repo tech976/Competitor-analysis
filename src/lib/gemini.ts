@@ -81,6 +81,42 @@ export async function geminiText(prompt: string): Promise<string> {
   return generate([{ text: prompt }]);
 }
 
+/**
+ * Grounded generation — Gemini with Google Search enabled, so the model reads
+ * the LIVE web (brand sites, socials, reviews, news, marketplaces) before it
+ * answers. This is what lets our research agents actually "go and look" rather
+ * than rely on stale training memory.
+ *
+ * Grounding is incompatible with forced JSON mime-type, so this returns free
+ * TEXT — callers that need structured data run it through completeJson() after.
+ * Throws if grounding is unavailable on the key/model; callers should fall back
+ * to ungrounded generation so the feature degrades gracefully instead of dying.
+ */
+export async function geminiGrounded(prompt: string): Promise<string> {
+  const key = requireGeminiKey();
+  const url = `${GEMINI_BASE}/models/${env.geminiModel}:generateContent?key=${encodeURIComponent(
+    key
+  )}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
+      generationConfig: { temperature: 0.4 },
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `Gemini grounding error ${res.status}: ${body.slice(0, 400) || res.statusText}`
+    );
+  }
+  const data = (await res.json()) as GeminiResponse;
+  return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ?? "";
+}
+
 /** Low-level multimodal generation — pass a mix of {text} and image parts. */
 export async function geminiGenerate(
   parts: Array<Record<string, unknown>>

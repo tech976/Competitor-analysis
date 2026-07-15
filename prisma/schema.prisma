@@ -54,6 +54,7 @@ model Client {
   scanRuns    ScanRun[]
   ads         Ad[]
   feedback    Feedback[]
+  adCopyRuns  AdCopyRun[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -350,6 +351,43 @@ enum DimensionKey {
   EMOTIONAL_APPEAL
   SOCIAL_PROOF
   CREATIVE_FRESHNESS
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// AD COPY STUDIO — deep client + competitor research → generated headlines.
+// Each run persists its research artifacts and output so the team can revisit
+// past generations without re-spending tokens. History kept per client.
+// ════════════════════════════════════════════════════════════════════════
+
+model AdCopyRun {
+  id       String        @id @default(cuid())
+  client   Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  status   CopyRunStatus @default(RUNNING)
+
+  // Inputs the run was seeded with.
+  website String?
+  goal    String? // optional campaign angle / brief from the team
+
+  // Research artifacts (structured JSON).
+  clientDossier   Json? // deep research on the client brand
+  competitorIntel Json? // array of per-competitor dossiers + their ad copy
+
+  // Output: grouped headlines + full ad concepts (structured JSON).
+  output Json?
+
+  model      String?
+  error      String?
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([clientId, createdAt])
+}
+
+enum CopyRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
 }
 
 // ════════════════════════════════════════════════════════════════════════
