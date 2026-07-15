@@ -10,15 +10,25 @@ export type MediaType = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" | "UNKNOWN";
 export type AdvertiserType = "CLIENT" | "COMPETITOR";
 
 /**
- * Canonical Meta Ad Library deep-link for a single ad. This is the exact format
- * Meta itself uses for "See ad details", so it opens THAT ad. Always build links
- * from the string archive id (never a JS number — ids can exceed 2^53 and lose
- * precision, which would land on a different ad).
+ * A real Meta ad "Library ID" is numeric and ≤16 digits. Longer or non-numeric
+ * values (collation ids, or ids some scrapers return that Meta can't resolve)
+ * open the "Ad isn't in the ad library" error — so we treat them as unlinkable.
  */
-export function metaAdUrl(adArchiveId: string): string {
-  return `https://www.facebook.com/ads/library/?id=${encodeURIComponent(
-    String(adArchiveId)
-  )}`;
+export function isValidArchiveId(id: string | null | undefined): boolean {
+  return /^\d{1,16}$/.test(String(id ?? "").trim());
+}
+
+/**
+ * Canonical Meta Ad Library deep-link for a single ad — the exact format Meta
+ * uses for "See ad details", so it opens THAT ad. Returns null when the archive
+ * id isn't a resolvable Library ID, so callers can hide the link instead of
+ * sending users to a broken page. Always pass the STRING id (never a JS number —
+ * ids can exceed 2^53 and lose precision).
+ */
+export function metaAdUrl(adArchiveId: string | null | undefined): string | null {
+  const id = String(adArchiveId ?? "").trim();
+  if (!isValidArchiveId(id)) return null;
+  return `https://www.facebook.com/ads/library/?id=${id}`;
 }
 
 /** One ad as we store it, regardless of which actor produced it. */

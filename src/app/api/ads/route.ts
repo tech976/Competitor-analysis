@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { metaAdUrl } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -31,5 +32,8 @@ export async function GET(req: Request) {
     orderBy: [{ isProvenWinner: "desc" }, { winningScore: "desc" }],
     take,
   });
-  return NextResponse.json({ ads });
+  // Validate the deep-link (invalid archive ids → null so the UI hides it).
+  return NextResponse.json({
+    ads: ads.map((a) => ({ ...a, adLibraryUrl: metaAdUrl(a.adArchiveId) })),
+  });
 }
