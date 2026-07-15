@@ -116,20 +116,24 @@ function headlinePrompt(
   intel: CompetitorIntel[],
   goal: string | null
 ): string {
-  return `You are a world-class direct-response copywriter and creative strategist for a performance-marketing agency. Write Meta (Facebook/Instagram) ad HEADLINES for the client below that will out-perform their competitors. You have deep research on both sides — USE IT. Every headline must be specific to THIS brand (never generic filler), match their voice, and be engineered to win against a real competitor gap.
+  return `You are the most in-demand direct-response ad copywriter in the game — the one brands beg to write their Meta ads because your hooks stop thumbs cold and print money. Write scroll-stopping Meta (Facebook/Instagram) ad HEADLINES for the client below. You have deep research on both the client and their rivals — USE IT to out-hook every competitor.
 
 CLIENT DOSSIER:
 ${JSON.stringify(dossier)}
 
-COMPETITOR INTELLIGENCE (what rivals are already doing — do NOT copy them; out-flank them):
+COMPETITOR INTELLIGENCE (what rivals already do — do NOT echo them; out-flank them):
 ${JSON.stringify(intel)}
 ${goal ? `\nCAMPAIGN GOAL / BRIEF: ${goal}` : ""}
 
-Rules:
-- Study the competitors' hooks, angles and offers. Find the WHITESPACE — angles they under-use — and lean into the client's real USP and proof points.
-- Headlines must be punchy, scroll-stopping, and ad-ready (≤ ~12 words). India-aware (₹, local context) when relevant.
-- Cover a range of proven angles. For each angle give 5–6 distinct headlines.
-- Do not fabricate offers, numbers, or claims the dossier doesn't support.
+THINK LIKE THE SCROLLER: they're bored, thumb flying, half a second of attention. Your first 3 words must break the pattern or you've lost them. Make them feel something INSTANTLY — curiosity, desire, "wait, that's me", FOMO.
+
+Craft rules — make these genuinely CATCHY, bold, even a little crazy:
+- Open with the HOOK, never a warm-up. BAN generic openers: "Discover", "Introducing", "Get", "Looking for", "Say goodbye to".
+- Use proven scroll-stoppers: a curiosity gap, a bold/contrarian claim, an unexpected twist, a sharp question that hits a nerve, hyper-specific numbers, "you"-language that calls out the exact person, a vivid before→after, or an insider secret.
+- Speak the audience's real words, fears and desires (use the dossier's audience + objections). Punchy and ad-ready, ≤ ~12 words. India-aware (₹, local slang/context) when it fits.
+- Give each angle a RANGE: some safe-and-sharp, some bold swings that make a scroller stop and think "no way". Vary rhythm and length — some 3 words, some a punchy sentence.
+- TRUTH ONLY: never fabricate offers, numbers, awards, or claims the dossier doesn't support. Catchy ≠ dishonest — dramatise what's REAL, don't invent.
+- Cover a range of angles; 5–6 distinct headlines per angle.
 
 Return JSON exactly:
 {
@@ -142,7 +146,7 @@ Return JSON exactly:
     {
       "angle": "<angle name, e.g. Problem–Solution | Social Proof | Offer-led | Aspiration | Authority | FOMO | Curiosity | Transformation | Comparison>",
       "intent": "one line on why this angle wins for this brand",
-      "headlines": [ { "text": "the headline", "rationale": "≤14 words: why it works / which competitor gap it exploits" } ]
+      "headlines": [ { "text": "the headline", "rationale": "≤14 words: the psychological hook / why a scroller stops / gap it exploits" } ]
     }
   ],
   "concepts": [
@@ -211,7 +215,7 @@ export async function generateAdCopy(
     // 4. Generate the headlines + concepts.
     const generated = await completeJson<Omit<AdCopyOutput, "competitorIntel">>(
       headlinePrompt(clientDossier, competitorIntel, opts.goal ?? null),
-      { maxTokens: 4000 }
+      { maxTokens: 4000, temperature: 0.9 } // hotter = punchier, more varied copy
     );
 
     const output: AdCopyOutput = {

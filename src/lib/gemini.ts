@@ -97,18 +97,20 @@ function extractText(data: GeminiResponse): string {
 
 /** Low-level: send parts to Gemini generateContent (JSON mode) and return text. */
 async function generate(
-  parts: Array<Record<string, unknown>>
+  parts: Array<Record<string, unknown>>,
+  temperature = 0.3
 ): Promise<string> {
   const data = await callGemini({
     contents: [{ role: "user", parts }],
-    generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
+    generationConfig: { temperature, responseMimeType: "application/json" },
   });
   return extractText(data);
 }
 
-/** Text-only generation (JSON) — used as an LLM fallback when Groq is down. */
-export async function geminiText(prompt: string): Promise<string> {
-  return generate([{ text: prompt }]);
+/** Text-only generation (JSON) — used as an LLM fallback when Groq is down.
+ *  `temperature` lets creative work (headlines) run hotter than analysis. */
+export async function geminiText(prompt: string, temperature = 0.3): Promise<string> {
+  return generate([{ text: prompt }], temperature);
 }
 
 /**

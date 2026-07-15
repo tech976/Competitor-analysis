@@ -33,7 +33,7 @@ function stripFences(raw: string): string {
  */
 export async function completeJson<T = unknown>(
   prompt: string,
-  opts: { system?: string; maxTokens?: number } = {}
+  opts: { system?: string; maxTokens?: number; temperature?: number } = {}
 ): Promise<T> {
   const system =
     (opts.system ?? ADGAP_SYSTEM) +
@@ -48,14 +48,14 @@ export async function completeJson<T = unknown>(
           { role: "system", content: system },
           { role: "user", content: prompt },
         ],
-        { maxTokens: opts.maxTokens, json: true }
+        { maxTokens: opts.maxTokens, json: true, temperature: opts.temperature }
       );
       return JSON.parse(stripFences(raw)) as T;
     });
   }
   if (integrations.gemini) {
     attempts.push(async () => {
-      const raw = await geminiText(`${system}\n\n${prompt}`);
+      const raw = await geminiText(`${system}\n\n${prompt}`, opts.temperature);
       return JSON.parse(stripFences(raw)) as T;
     });
   }
@@ -64,6 +64,7 @@ export async function completeJson<T = unknown>(
       anthropicCompleteJson<T>([{ role: "user", content: prompt }], {
         system: opts.system,
         maxTokens: opts.maxTokens,
+        temperature: opts.temperature,
       })
     );
   }
