@@ -11,7 +11,6 @@ import {
   Trophy,
   PenLine,
   Lightbulb,
-  Bell,
   FileText,
   Settings,
   Sparkles,
@@ -29,7 +28,6 @@ const NAV = [
   { href: "/winning-ads", label: "Winning Ads", Icon: Trophy },
   { href: "/ad-copy", label: "Ad Copy", Icon: PenLine },
   { href: "/insights", label: "Insights", Icon: Lightbulb },
-  { href: "/alerts", label: "Alerts", Icon: Bell },
   { href: "/reports", label: "Reports", Icon: FileText },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
